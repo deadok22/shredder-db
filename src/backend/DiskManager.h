@@ -20,8 +20,9 @@ public:
   DiskManager(string const& name);
   bool init_context(string const &fname);// change handler of file
 private:
-
-   
+  DiskManager(DiskManager const&);
+  DiskManager& operator=(DiskManager const&);
+ 
   FILE* file_;
 
 };
