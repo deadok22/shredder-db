@@ -10,7 +10,7 @@ DiskManager::DiskManager()
 DiskManager::DiskManager(string const & name)
  :file_(0)
 {
-  initContext(name);
+  init_context(name);
   Utils::log("[disk_manager] init object");
 }
 
@@ -19,8 +19,9 @@ bool DiskManager::file_exists(string const& fname)
   return  std::ifstream(fname.c_str()) != NULL;
 }
 
-bool DiskManager::initContext(string const& file)
+bool DiskManager::init_context(string const& fname)
 {
+  string file = InfoPool::get_instance()->get_db_info()->root_path + fname;
   Utils::log("[disk_manager] open/create file: "+file);
   string mode;
 
@@ -77,7 +78,7 @@ size_t DiskManager::allocate()
 
 }
 
-bool DiskManager::dealloce(size_t page_id)
+bool DiskManager::deallocate(size_t page_id)
 {
 
 }
@@ -87,7 +88,7 @@ bool DiskManager::dealloce(size_t page_id)
 #include <iostream>
 int main() {
   DBInfo di;
-  di.root_path = "test/";
+  di.root_path = "./";
   di.page_size = 4096;
   InfoPool::get_instance()->set_db_info(di);
   DiskManager dm("file");
