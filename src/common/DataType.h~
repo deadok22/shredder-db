@@ -1,0 +1,9 @@
+#pragma once
+
+enum TypeCode {
+  INT = 0,
+  DOUBLE = 1,
+  VARCHAR = 2
+};
+
+
