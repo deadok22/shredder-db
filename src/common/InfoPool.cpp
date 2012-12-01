@@ -1,5 +1,6 @@
 #include "InfoPool.h"
 
+
 InfoPool * InfoPool::instance_ = new InfoPool();
 
 InfoPool * InfoPool::get_instance() {

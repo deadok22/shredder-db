@@ -18,7 +18,7 @@ private:
   static InfoPool * instance_; 
 };
 
-#ifdef TEST
+#ifdef TEST_INFOPOOL
 #include <iostream>
 
 int main() {
