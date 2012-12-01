@@ -9,3 +9,8 @@
 Имплементация методов в хедерах только очень простых
 
 Везде пишем #ifdef DEBUG
+
+LOG Levels:
+  INFO - common execution flow
+  WARNING - smth that may cause error
+  ERROR - smth failed
