@@ -1,4 +1,3 @@
-#include <fstream>
 #include "DiskManager.h"
 #include "../common/Utils.h"
 #include "../common/InfoPool.h"
@@ -15,10 +14,7 @@ DiskManager::DiskManager(string const & name)
   Utils::log("[disk_manager] init object");
 }
 
-bool DiskManager::file_exists(string const& fname)
-{
-  return  std::ifstream(fname.c_str()) != NULL;
-}
+ 
 
 bool DiskManager::init_context(string const& fname)
 {
@@ -84,14 +80,14 @@ size_t DiskManager::allocate()
 	//stub
 	//TO-DO bitmap for tracking free page
 	Utils::log("[disk_manager] allocate (stub)");
-	return 0;
+  return 0;
 }
 
 bool DiskManager::deallocate(size_t page_id)
 {
 	//stub
-  Utils::log("[disk_manager] de-allocate (stub)");
-	return true;
+  Utils::log("[disk_manager] de-allocate page (stub)");
+  return true;
 }
 
 //TEST_CODE

@@ -21,7 +21,7 @@ public:
   bool init_context(string const &fname);// change handler of file
 private:
 
-  bool file_exists(string const& fname);
+   
   FILE* file_;
 
 };
