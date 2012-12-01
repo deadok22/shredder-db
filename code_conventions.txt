@@ -10,6 +10,8 @@
 
 Везде пишем #ifdef DEBUG
 
+В классах для smoke-тестирования можно писать main в #indef TEST
+
 LOG Levels:
   INFO - common execution flow
   WARNING - smth that may cause error
