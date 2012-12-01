@@ -15,7 +15,7 @@ public:
 };
 
 //TEST_CODE
-#ifdef TEST
+#ifdef TEST_UTILS
 int main() {
   Utils::log("LogInfo", INFO);
   Utils::log("LogError", ERROR);

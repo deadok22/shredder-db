@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "../common/DataType.h"
+#include "../common/TableColumn.h"
 
 enum SqlStatementType {
   CREATE_TABLE = 1,
@@ -26,7 +26,7 @@ class SqlStatement {
     SqlStatementType type_;
 };
 
-class TableTargetedStatement : SqlStatement {
+class TableTargetedStatement : public SqlStatement {
   protected:
     TableTargetedStatement(SqlStatementType type, std::string table_name)
       : SqlStatement(type), table_name_(table_name) {}
@@ -38,7 +38,7 @@ class TableTargetedStatement : SqlStatement {
     std::string table_name_;
 };
 
-class CreateTableStatement : TableTargetedStatement {
+class CreateTableStatement : public TableTargetedStatement {
   public:
     CreateTableStatement(std::string table_name, std::vector<TableColumn> columns)
       : TableTargetedStatement(CREATE_TABLE, table_name), columns_(columns) {}
@@ -53,7 +53,7 @@ class CreateTableStatement : TableTargetedStatement {
 
 //TODO add select from join statement
 //TODO remove inheritance from TableTargetedStatement when you add join support
-class SelectStatement : TableTargetedStatement {
+class SelectStatement : public TableTargetedStatement {
   public:
     SelectStatement(std::string table_name, std::vector<std::string> column_names)
       : TableTargetedStatement(SELECT, table_name), column_names_(column_names) {}
@@ -70,7 +70,7 @@ class SelectStatement : TableTargetedStatement {
     std::vector<std::string> column_names_;
 };
 
-class InsertStatement : TableTargetedStatement {
+class InsertStatement : public TableTargetedStatement {
   public:
     InsertStatement(std::string table_name, std::vector<std::string> column_names, std::vector<std::string> values)
       : TableTargetedStatement(INSERT, table_name), column_names_(column_names), values_(values) {}
