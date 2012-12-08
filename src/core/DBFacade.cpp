@@ -10,14 +10,32 @@ DBFacade * DBFacade::get_instance() {
   return instance_;
 }
 
-void DBFacade::execude_statement(CreateTableStatement const & stmt) {
+void DBFacade::execude_statement(SqlStatement const * stmt) {
+  switch (stmt->get_type()) {
+    case SELECT:
+      execude_statement((SelectStatement const *) stmt);
+      break;
+    case INSERT:
+      execude_statement((InsertStatement const *) stmt);
+      break;
+    case CREATE_TABLE:
+      execude_statement((CreateTableStatement const *) stmt);
+      break;
+    case UNKNOWN:
+      Utils::warning("[DBF] Given statement is unknown");
+      break;
+  }
+}
+
+void DBFacade::execude_statement(CreateTableStatement const * stmt) {
   Utils::info("[DBFacade][EXEC_START] Create statement");
 
-  std::vector<TableColumn> columns = stmt.get_columns();
+  std::vector<TableColumn> columns = stmt->get_columns();
 
   TableMetaData table_metadata;
-  table_metadata.set_name(stmt.get_table_name());
-
+  table_metadata.set_name(stmt->get_table_name());
+  Utils::info("[DBFacade] Table name is " + stmt->get_table_name());
+  
   for (std::vector<TableColumn>::iterator it = columns.begin();
       it != columns.end();
       ++it) {
@@ -35,10 +53,10 @@ void DBFacade::execude_statement(CreateTableStatement const & stmt) {
   Utils::info("[DBFacade][EXEC_END] Create statement");
 }
 
-void DBFacade::execude_statement(SelectStatement const & stmt) {
+void DBFacade::execude_statement(SelectStatement const * stmt) {
   Utils::info("[EXEC_START] Select statement");
 }
 
-void DBFacade::execude_statement(InsertStatement const & stmt) {
+void DBFacade::execude_statement(InsertStatement const * stmt) {
   Utils::info("[EXEC_START] Insert statement");
 }
