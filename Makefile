@@ -3,7 +3,6 @@ D_KEY = -DDEBUG
 COPTS = -std=c++0x
 
 all: build
-	g++ build/src/core/DBFacade.cpp build/MetaDataProvider.o build/common/Utils.o build/common/InfoPool.o build/gen/core/TableMetadata.o -lprotobuf -DTEST_DBF -DDEBUG -o test_dbf
 
 clean:
 	rm -rf build
