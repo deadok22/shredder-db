@@ -1,5 +1,6 @@
 
 D_KEY = -DDEBUG
+COPTS = -std=c++0x
 
 all: build
 	g++ build/src/core/DBFacade.cpp build/MetaDataProvider.o build/common/Utils.o build/common/InfoPool.o build/gen/core/TableMetadata.o -lprotobuf -DTEST_DBF -DDEBUG -o test_dbf
@@ -22,16 +23,16 @@ build_proto: gen_proto
 
 build_common: init
 	-mkdir build/common
-	g++ src/common/Utils.cpp $(D_KEY) -c -o build/Utils.o
-	g++ src/common/InfoPool.cpp -c -o build/InfoPool.o
+	g++ src/common/Utils.cpp $(COPTS) $(D_KEY) -c -o build/Utils.o
+	g++ src/common/InfoPool.cpp $(COPTS) -c -o build/InfoPool.o
 
 build_sqlparser: init
-	g++ src/sqlparser/SqlParser.cpp -c -o build/SqlParser.o	
+	g++ src/sqlparser/SqlParser.cpp $(COPTS) -c -o build/SqlParser.o	
 
 build_core: init build_common build_proto
 	-mkdir build/core
-	g++ src/core/MetaDataProvider.cpp -Ibuild/src/core -c -o build/MetaDataProvider.o
-	g++ src/core/DBFacade.cpp -Ibuild/src/core -c -o build/DBFacade.o
+	g++ src/core/MetaDataProvider.cpp $(COPTS) -Ibuild/src/core -c -o build/MetaDataProvider.o
+	g++ src/core/DBFacade.cpp $(COPTS) -Ibuild/src/core -c -o build/DBFacade.o
 
 build: build_core build_common build_proto build_sqlparser
-	g++ src/main.cpp build/*.o -std=c++0x -Ibuild/src/core -lprotobuf -lboost_regex -o shredder_db
+	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -o shredder_db
