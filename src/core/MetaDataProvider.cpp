@@ -32,7 +32,7 @@ TableMetaData * MetaDataProvider::get_meta_data(string const & struct_name) {
 bool MetaDataProvider::save_meta_data(TableMetaData const & meta_data) {
   DBInfo * db_info = InfoPool::get_instance()->get_db_info();
   //move to consts
-  string table_folder = db_info->root_path +meta_data.name();
+  string table_folder = db_info->root_path + meta_data.name();
   string meta_data_path = table_folder + "/metadata";
 
   if (!Utils::check_existence(table_folder, true)) {

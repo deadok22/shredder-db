@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <boost/algorithm/string.hpp>
 
 #include "common/InfoPool.h"
 #include "common/Utils.h"
@@ -35,9 +36,9 @@ void describe_table(string const & table_name) {
     std::cout << "Error: Table with name " + table_name + " does not exist" << std::endl;
     return;
   }
-  std::cout << "Table " + table_name + "has the following attributes: " << std::endl;
+  std::cout << "Table " + table_name + " has the following attributes: " << std::endl;
   for (unsigned attr_ind = 0; attr_ind < metadata->attribute_size(); ++attr_ind) {
-    std::cout << "  " + std::to_string(attr_ind) + ". " << metadata->attribute(attr_ind).name() << " of type " ;
+    std::cout << "  " + std::to_string(attr_ind + 1) + ". " << metadata->attribute(attr_ind).name() << " of type " ;
     std::cout << DataType::describe((TypeCode)metadata->attribute(attr_ind).type_name(), metadata->attribute(attr_ind).size());
   }
   //TODO show indeces
@@ -47,6 +48,8 @@ void repl() {
   SqlParser parser;
   while (true) {
     std::string command = read_command();
+    boost::to_upper(command);
+
     Utils::info("[REPL] execute \"" + command +"\"");
     if (command.compare("QUIT") == 0) {
       return;
@@ -68,6 +71,8 @@ int main(int argc, char ** argv) {
     std::cout << "Not enough arguments. Args: <path to dir> <max page number>" << std::endl;
     return 0;
   }
+
+  //TODO create full path to dir
 
   InfoPool::get_instance()->get_db_info()->root_path = argv[1];
   Utils::info("[Common] DB root path is " + InfoPool::get_instance()->get_db_info()->root_path);
