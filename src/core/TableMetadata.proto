@@ -3,7 +3,7 @@ message TableMetaData {
 
   message AttributeDescription {
     required string name = 1;
-    required string type_name = 2;
+    required int32 type_name = 2;
     optional int32 size = 3;
   }
 

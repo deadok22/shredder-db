@@ -19,7 +19,7 @@ class DataType {
           break;
         }
         case VARCHAR : {
-          type_length_ = type_length;
+          type_length_ = type_length * sizeof(char);
           break;
         }
       }
@@ -27,7 +27,20 @@ class DataType {
     TypeCode get_type_code() {
       return type_;
     }
+    size_t get_size() {
+      return type_length_;
+    }
+    static DataType get_int() {
+      return DataType(INT);
+    }
+    static DataType get_double() {
+      return DataType(DOUBLE);
+    }
+    static DataType get_varchar(size_t size) {
+      return DataType(VARCHAR, size);
+    }
   private:
     TypeCode type_;
     size_t type_length_;
 };
+

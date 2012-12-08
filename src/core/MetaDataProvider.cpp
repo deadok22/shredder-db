@@ -33,7 +33,7 @@ bool MetaDataProvider::save_meta_data(TableMetaData const & meta_data) {
   //move to consts
   string meta_data_path = db_info->root_path + meta_data.name() + "/metadata";
   fstream output(meta_data_path.c_str(), ios::out | ios::trunc | ios::binary);
-  cout << meta_data_path << endl;
+  Utils::info("Store metadata under " + meta_data_path);
   meta_data.SerializeToOstream(&output);
   output.close();
 }

@@ -16,3 +16,10 @@
 
 # Gedit temporary files
 *~
+
+#build directory
+build/*
+
+#hidden files
+.*
+!.gitignore

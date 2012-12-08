@@ -3,16 +3,17 @@
 #include <string>
 #include <vector>
 #include <map>
+
 #include "TableMetadata.pb.h"
 
 class MetaDataProvider {
 public:
-  static TableMetaData * get_meta_data(string struct_name);
+  static TableMetaData * get_meta_data(std::string struct_name);
   static bool save_meta_data(TableMetaData const & meta_data);
   static MetaDataProvider * get_instance();
 private:
   static MetaDataProvider * instance_;
-  static map<string, TableMetaData *> cache_;
+  static std::map<std::string, TableMetaData *> cache_;
 };
 
 #ifdef TEST_MDP
