@@ -19,7 +19,7 @@ class DataType {
           break;
         }
         case VARCHAR : {
-          type_length_ = type_length;
+          type_length_ = type_length * sizeof(char);
           break;
         }
       }
@@ -27,7 +27,21 @@ class DataType {
     TypeCode get_type_code() {
       return type_;
     }
+    size_t get_size() {
+      return type_length_;
+    }
+    static DataType get_int() {
+      return int_type_;
+    }
+    static DataType get_double() {
+      return double_type_;
+    }
   private:
+    static DataType const int_type_;
+    static DataType const double_type_;
     TypeCode type_;
     size_t type_length_;
 };
+
+const DataType DataType::int_type_(INT);
+const DataType DataType::double_type_(DOUBLE);

@@ -1,4 +1,4 @@
 run:
 	protoc --cpp_out=. ./TableMetadata.proto
-	g++ MetaDataProvider.cpp ../common/Utils.cpp ../common/InfoPool.cpp TableMetadata.pb.cc -lprotobuf -DTEST_MDP -o test_mp
-	./test_mp
+	g++ DBFacade.cpp MetaDataProvider.cpp ../common/Utils.cpp ../common/InfoPool.cpp TableMetadata.pb.cc -lprotobuf -DTEST_DBF -DDEBUG -o test_dbf
+	./test_dbf
