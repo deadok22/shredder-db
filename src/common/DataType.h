@@ -31,9 +31,11 @@ class DataType {
       return type_length_;
     }
     static DataType get_int() {
+      DataType int_type_(INT);
       return int_type_;
     }
     static DataType get_double() {
+      DataType int_type_(double_type_);
       return double_type_;
     }
   private:
@@ -43,5 +45,3 @@ class DataType {
     size_t type_length_;
 };
 
-const DataType DataType::int_type_(INT);
-const DataType DataType::double_type_(DOUBLE);

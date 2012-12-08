@@ -6,9 +6,10 @@ class DBFacade {
 public:
   static DBFacade * get_instance();
 
-  void execude_statement(CreateTableStatement const &);
-  void execude_statement(SelectStatement const &);
-  void execude_statement(InsertStatement const &);
+  void execude_statement(SqlStatement const *);
+  void execude_statement(CreateTableStatement const *);
+  void execude_statement(SelectStatement const *);
+  void execude_statement(InsertStatement const *);
 
 private:
   static DBFacade * instance_;

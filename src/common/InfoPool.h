@@ -5,7 +5,7 @@ using namespace std;
 
 struct DBInfo {
   string root_path;
-  size_t page_size;
+  size_t max_page_cnt;
   string cur_file;
 };
 
