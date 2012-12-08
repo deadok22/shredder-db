@@ -5,6 +5,7 @@
 #include "../common/TableColumn.h"
 
 enum SqlStatementType {
+  UNKNOWN = 0,
   CREATE_TABLE = 1,
   CREATE_INDEX = 2,
   INSERT = 3,
@@ -15,6 +16,8 @@ enum SqlStatementType {
 
 class SqlStatement {
   public:
+    SqlStatement() : type_(UNKNOWN) {}
+    
     SqlStatementType get_type() const {
       return type_;
     }
@@ -24,6 +27,11 @@ class SqlStatement {
 
   private:
     SqlStatementType type_;
+};
+
+class UnknownStatement : public SqlStatement {
+  public:
+    UnknownStatement() : SqlStatement(UNKNOWN) {}
 };
 
 class TableTargetedStatement : public SqlStatement {
@@ -62,7 +70,7 @@ class SelectStatement : public TableTargetedStatement {
       return column_names_;
     }
     
-    bool is_select_asterisk() {
+    bool is_select_asterisk() const {
       return column_names_.empty();
     }
     
