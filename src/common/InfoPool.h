@@ -7,6 +7,7 @@ struct DBInfo {
   string root_path;
   size_t page_size;
   string cur_file;
+  size_t count_page; // in memory
 };
 
 class InfoPool {
