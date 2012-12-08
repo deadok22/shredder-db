@@ -5,6 +5,7 @@
 #include "common/InfoPool.h"
 #include "common/Utils.h"
 #include "core/DBFacade.h"
+#include "core/MetaDataProvider.h"
 #include "sqlparser/SqlParser.h"
 
 std::string read_command() {
@@ -16,7 +17,7 @@ std::string read_command() {
   while (true) {
     getline(std::cin, command_chunck);
     if (command_chunck.empty()) {
-      if (++empty_in_a_row == 2) {
+      if (++empty_in_a_row == 1) {
         return command;
       }
       continue;
@@ -28,13 +29,31 @@ std::string read_command() {
   }
 }
 
+void describe_table(string const & table_name) {
+  TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
+  if (!metadata) {
+    std::cout << "Error: Table with name " + table_name + " does not exist" << std::endl;
+    return;
+  }
+  std::cout << "Table " + table_name + "has the following attributes: " << std::endl;
+  for (unsigned attr_ind = 0; attr_ind < metadata->attribute_size(); ++attr_ind) {
+    std::cout << "  " + std::to_string(attr_ind) + ". " << metadata->attribute(attr_ind).name() << " of type " ;
+    std::cout << DataType::describe((TypeCode)metadata->attribute(attr_ind).type_name(), metadata->attribute(attr_ind).size());
+  }
+  //TODO show indeces
+}
+
 void repl() {
   SqlParser parser;
   while (true) {
     std::string command = read_command();
     Utils::info("[REPL] execute \"" + command +"\"");
-    if (command.compare("quit") == 0) {
+    if (command.compare("QUIT") == 0) {
       return;
+    } if (command.find("ABOUT ") == 0) {
+      std::string table_name = command.substr(6);
+      Utils::info("[REPL] 'about' was called for " + table_name);
+      describe_table(table_name);
     } else {
       SqlStatement const * stmt = parser.parse(command);
 
