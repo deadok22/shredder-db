@@ -13,6 +13,11 @@ static const boost::regex CREATE_TABLE_START_REGEX(CREATE_TABLE_START_REGEX_TEXT
 static const std::string INSERT_START_REGEX_TEXT("^\\s*INSERT\\s+INTO\\s+.*$");
 static const boost::regex INSERT_START_REGEX(INSERT_START_REGEX_TEXT, boost::regex_constants::icase);
 
+/*
+ * Utility constants
+ */
+static const std::string CSV_REGEX_TEXT = "(?:\\*|(?:(?:\\s*\\w+\\s*,)*\\s*\\w+))";
+
 SqlStatement const * SqlParser::parse(std::string const & statement_text) const {
   Utils::info(" [SqlParser] entered sql statement parsing");
   Utils::info(" [SqlParser] the statement is " + statement_text);
@@ -86,13 +91,37 @@ SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & st
 }
 
 SqlStatement const * SqlParser::parseInsertStatement(std::string const & statement_text) const {
-  //TODO do actual parsing
-  return new InsertStatement("NOT PARSED YET", std::vector<std::string>(), std::vector<std::string>());
+  static const std::string INSERT_REGEX_TEXT
+        = "^\\s*INSERT\\s+INTO\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'"
+          + CSV_REGEX_TEXT
+          + ")\\)\\s*VALUES\\s*\\((?'VALUES'" 
+          + CSV_REGEX_TEXT
+          + ")\\)$";
+  static const boost::regex INSERT_REGEX(INSERT_REGEX_TEXT, boost::regex_constants::icase);
+  
+  Utils::info(" [SqlParser] parsing INSERT statement");
+  
+  boost::smatch match_results;
+  if (!boost::regex_match(statement_text, match_results, INSERT_REGEX)) {
+    Utils::info(" [SqlParser] invalid INSERT statement syntax");
+    return new UnknownStatement();
+  }
+  
+  std::string table = match_results["TABLE"].str();
+  std::vector<std::string> column_names = parseCommaSeparatedValues(match_results["COLUMNS"].str());
+  std::vector<std::string> values = parseCommaSeparatedValues(match_results["VALUES"].str());
+  
+  if (column_names.size() != values.size()) {
+    Utils::info(" [SqlParser] invalidINSERT statement syntax: columns count is not equal to values count");
+    return new UnknownStatement();
+  }
+  
+  return new InsertStatement(table, column_names, values);
 }
 
 SqlStatement const * SqlParser::parseSelectStatement(std::string const & statement_text) const {
   static const std::string SELECT_REGEX_TEXT
-        = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|(?:(?:\\s*\\w+\\s*,)*\\s*\\w+)))\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
+        = "^\\s*SELECT\\s+(?'WHAT'" + CSV_REGEX_TEXT + ")\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
   static const boost::regex SELECT_REGEX(SELECT_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info(" [SqlParser] parsing SELECT statement");
