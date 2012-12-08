@@ -31,19 +31,15 @@ class DataType {
       return type_length_;
     }
     static DataType get_int() {
-      DataType int_type_(INT);
-      return int_type_;
+      return DataType(INT);
     }
     static DataType get_double() {
-      DataType int_type_(double_type_);
-      return double_type_;
+      return DataType(DOUBLE);
     }
     static DataType get_varchar(size_t size) {
       return DataType(VARCHAR, size);
     }
   private:
-    static DataType const int_type_;
-    static DataType const double_type_;
     TypeCode type_;
     size_t type_length_;
 };

@@ -103,7 +103,7 @@ SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & st
   
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, CREATE_TABLE_REGEX)) {
-    Utils::info(" [SqlParser] invalid CREATE TABLE statement syntax");
+    Utils::warning(" [SqlParser] invalid CREATE TABLE statement syntax");
     return new UnknownStatement();
   }
   
