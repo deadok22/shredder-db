@@ -1,5 +1,6 @@
 #include "SqlParser.h"
 #include <boost/regex.hpp>
+#include <string>
 
 /*
  * SQL statement start regexps. Used to get type of sql statements.
@@ -16,7 +17,15 @@ static const boost::regex INSERT_START_REGEX(INSERT_START_REGEX_TEXT, boost::reg
 /*
  * Utility constants
  */
-static const std::string CSV_REGEX_TEXT = "(?:\\*|(?:(?:\\s*\\w+\\s*,)*\\s*\\w+))";
+static const std::string CSV_REGEX_TEXT = "(?:(?:\\s*\\w+\\s*,)*\\s*\\w+)";
+static const std::string COLUMN_NAME_AND_TYPE_REGEX_TEXT
+      = "(?:\\s*(?'NAME'\\w+)\\s+(?:(?'TYPE'INT)|(?'TYPE'DOUBLE)|(?:(?'TYPE'VARCHAR)\\s*\\((?'SIZE'\\d+)\\)))\\s*)";
+static const std::string NAMES_AND_TYPES_REGEX_TEXT
+      = "(?:(?:\\s*"
+        + COLUMN_NAME_AND_TYPE_REGEX_TEXT
+        + "\\s*,)*\\s*"
+        + COLUMN_NAME_AND_TYPE_REGEX_TEXT
+        +")";
 
 SqlStatement const * SqlParser::parse(std::string const & statement_text) const {
   Utils::info(" [SqlParser] entered sql statement parsing");
@@ -86,8 +95,26 @@ SqlStatementType SqlParser::getSqlStatementType(std::string const & statement_te
 }
 
 SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & statement_text) const {
-  //TODO do actual parsing
-  return new CreateTableStatement("NOT PARSED YET", std::vector<TableColumn>());
+  static const std::string CREATE_TABLE_REGEX_TEXT
+        = "^\\s*CREATE\\s+TABLE\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'" + NAMES_AND_TYPES_REGEX_TEXT + ")\\)$";
+  static const boost::regex CREATE_TABLE_REGEX(CREATE_TABLE_REGEX_TEXT, boost::regex_constants::icase);
+  
+  Utils::info(" [SqlParser] parsing CREATE TABLE statement");
+  
+  boost::smatch match_results;
+  if (!boost::regex_match(statement_text, match_results, CREATE_TABLE_REGEX)) {
+    Utils::info(" [SqlParser] invalid CREATE TABLE statement syntax");
+    return new UnknownStatement();
+  }
+  
+  std::string table = match_results["TABLE"].str();
+  std::vector<TableColumn> table_columns = parseTableColumns(match_results["COLUMNS"].str());
+  if (0 == table_columns.size()) {
+    Utils::warning(" [SqlParser] invalid CREATE TABLE syntax: passed column definitions are empty or they contain errors");
+    return new UnknownStatement();
+  }
+  
+  return new CreateTableStatement(table, table_columns);
 }
 
 SqlStatement const * SqlParser::parseInsertStatement(std::string const & statement_text) const {
@@ -121,7 +148,7 @@ SqlStatement const * SqlParser::parseInsertStatement(std::string const & stateme
 
 SqlStatement const * SqlParser::parseSelectStatement(std::string const & statement_text) const {
   static const std::string SELECT_REGEX_TEXT
-        = "^\\s*SELECT\\s+(?'WHAT'" + CSV_REGEX_TEXT + ")\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
+        = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|" + CSV_REGEX_TEXT + "))\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
   static const boost::regex SELECT_REGEX(SELECT_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info(" [SqlParser] parsing SELECT statement");
@@ -166,4 +193,50 @@ std::vector<std::string> SqlParser::parseCommaSeparatedValues(std::string const 
   }
   
   return values;
+}
+
+/**
+ * Returns an empty vector if any syntax errors are found
+ */
+std::vector<TableColumn> SqlParser::parseTableColumns(std::string const & columns_string) const {
+  static const std::string PARSE_ONE_COLUMN_NAME_AND_TYPE_REGEX_TEXT
+        = "^(?:(?:" 
+          + COLUMN_NAME_AND_TYPE_REGEX_TEXT 
+          + "\\s*,)|" 
+          + COLUMN_NAME_AND_TYPE_REGEX_TEXT 
+          + ")";
+  static const boost::regex COLUMN_NAME_AND_TYPE_REGEX(PARSE_ONE_COLUMN_NAME_AND_TYPE_REGEX_TEXT, boost::regex_constants::icase);
+  
+  Utils::info(" [SqlParser] [parseTC] parsing table columns");
+  
+  std::string::const_iterator start = columns_string.begin();
+  std::string::const_iterator end = columns_string.end();
+  std::vector<TableColumn> columns;
+  boost::smatch match_results;
+  while(boost::regex_search(start, end, match_results, COLUMN_NAME_AND_TYPE_REGEX)) {
+    std::string name = match_results["NAME"].str();
+    std::string type = match_results["TYPE"].str();
+    Utils::info(" [SqlParser] [parseTC] parsed column: " + name + " of type " + type);
+    if ("INT" == type) {
+      columns.push_back(TableColumn(name, DataType::get_int()));
+    } else if ("DOUBLE" == type) {
+      columns.push_back(TableColumn(name, DataType::get_double()));
+    } else if ("VARCHAR" == type) {
+      int size = std::stoi(match_results["SIZE"].str());
+      if (size < 1) {
+        Utils::warning(" [SqlParser] [parseTC] VARCHAR size argument is not positive");
+      }
+      columns.push_back(TableColumn(name, DataType::get_varchar((size_t) size)));
+    } else {
+      Utils::warning(" [SqlParser] [parseTC] unexpected column type: " + type);
+      return std::vector<TableColumn>();
+    }
+    start = match_results[0].second;
+  }
+  
+  if (0 == columns.size()) {
+    Utils::warning(" [SqlParser] [parseTC] no columns parsed");
+  }
+  
+  return columns;
 }

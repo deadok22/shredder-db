@@ -17,13 +17,14 @@ class SqlParser {
     SqlStatement const * parseInsertStatement(std::string const & statement_text) const;
     SqlStatement const * parseSelectStatement(std::string const & statement_text) const;
     std::vector<std::string> parseCommaSeparatedValues(std::string const & values_string) const;
+    std::vector<TableColumn> parseTableColumns(std::string const & columns_string) const;
 };
 
 //TEST_CODE
 #ifdef TEST_SQLPARSER
 int main() {
   SqlParser parser;
-  delete parser.parse("CREATE TABLE table_name(INT a, DOUBLE b, VARCHAR(50) c)");
+  delete parser.parse("CREATE TABLE table_name(a INT, b DOUBLE, c VARCHAR(50))");
   delete parser.parse("SELECT * FROM table_name");
   delete parser.parse("SELECT l, l, a, b, c FROM table_name");
   delete parser.parse("INSERT INTO table_name(a, b, c) VALUES(1, 2, 3)");

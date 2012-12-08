@@ -36,6 +36,9 @@ class DataType {
     static DataType get_double() {
       return double_type_;
     }
+    static DataType get_varchar(size_t size) {
+      return DataType(VARCHAR, size);
+    }
   private:
     static DataType const int_type_;
     static DataType const double_type_;
