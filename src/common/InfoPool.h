@@ -6,6 +6,7 @@ using namespace std;
 struct DBInfo {
   string root_path;
   size_t page_size;
+  string cur_file;
 };
 
 class InfoPool {

@@ -8,17 +8,17 @@ DiskManager::DiskManager()
 {}
 
 DiskManager::DiskManager(string const & name)
- :file_(0)
+ :file_(0),fname_(name)
 {
-  init_context(name);
-  Utils::log("[disk_manager] init object");
+  init_context();
+  Utils::log("[disk_manager] create object diskmanager");
 }
 
  
 
-bool DiskManager::init_context(string const& fname)
+bool DiskManager::init_context()
 {
-  string file = InfoPool::get_instance()->get_db_info()->root_path + fname;
+  string file = InfoPool::get_instance()->get_db_info()->root_path + fname_;
   Utils::log("[disk_manager] open/create file: "+file);
   string mode;
 
@@ -40,9 +40,23 @@ bool DiskManager::init_context(string const& fname)
   return true;
 }
 
+bool DiskManager::update_context()
+{
+  string cur_file = InfoPool::get_instance()->get_db_info()->cur_file;
+  if( cur_file != fname_){
+    Utils::log("[disk_manager] update context(file):"+fname_+"->"+cur_file);
+    fname_ = cur_file;
+    return true;
+  }
+  return false;
+}
 
 bool DiskManager::read_page(size_t page_id, char *buf)
 {
+  if( update_context())
+    if( !init_context())
+      return false;
+    
   size_t const PAGE_SIZE = InfoPool::get_instance()->get_db_info()->page_size;
 
 
@@ -60,6 +74,10 @@ bool DiskManager::read_page(size_t page_id, char *buf)
 
 bool DiskManager::write_page(size_t page_id, char * buf)
 {
+  if( update_context())
+    if( !init_context())
+      return false;
+
   size_t const PAGE_SIZE = InfoPool::get_instance()->get_db_info()->page_size;
 
   if(fseek(file_,page_id*PAGE_SIZE,SEEK_SET)){
@@ -98,10 +116,11 @@ int main() {
   DBInfo di;
   di.root_path = "./";
   di.page_size = 4096;
+  di.cur_file = "file";
   InfoPool::get_instance()->set_db_info(di);
   
   
-  DiskManager dm("file");
+  DiskManager dm("file1");
 
   char * buf = new char[InfoPool::get_instance()->get_db_info()->page_size];
   dm.read_page(10,buf);

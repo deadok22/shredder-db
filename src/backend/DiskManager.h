@@ -18,11 +18,13 @@ public:
   DiskManager();
 
   DiskManager(string const& name);
-  bool init_context(string const &fname);// change handler of file
+  bool update_context();
+  bool init_context();// change handler of file
 private:
   DiskManager(DiskManager const&);
   DiskManager& operator=(DiskManager const&);
  
+  string fname_;
   FILE* file_;
 
 };
