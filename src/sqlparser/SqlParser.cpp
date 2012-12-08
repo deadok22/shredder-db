@@ -32,18 +32,18 @@ SqlStatement const * SqlParser::parse(std::string const & statement_text) const 
   Utils::info(" [SqlParser] the statement is " + statement_text);
 
   SqlStatement const * parsedStatement = 0;
-  SqlStatementType type = getSqlStatementType(statement_text);
+  SqlStatementType type = get_sql_statement_type(statement_text);
   switch(type) {
     case SELECT : {
-      parsedStatement = parseSelectStatement(statement_text);
+      parsedStatement = parse_select_statement(statement_text);
       break;
     }
     case CREATE_TABLE : {
-      parsedStatement = parseCreateTableStatement(statement_text);
+      parsedStatement = parse_create_table_statement(statement_text);
       break;
     }
     case INSERT : {
-      parsedStatement = parseInsertStatement(statement_text);
+      parsedStatement = parse_insert_statement(statement_text);
       break;
     }
     case CREATE_INDEX : {
@@ -74,7 +74,7 @@ SqlStatement const * SqlParser::parse(std::string const & statement_text) const 
   return parsedStatement;
 }
 
-SqlStatementType SqlParser::getSqlStatementType(std::string const & statement_text) const {
+SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement_text) const {
   Utils::info(" [SqlParser] recognizing sql statement type");
   
   if (boost::regex_match(statement_text, SELECT_START_REGEX)) {
@@ -94,7 +94,7 @@ SqlStatementType SqlParser::getSqlStatementType(std::string const & statement_te
   return UNKNOWN;
 }
 
-SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & statement_text) const {
+SqlStatement const * SqlParser::parse_create_table_statement(std::string const & statement_text) const {
   static const std::string CREATE_TABLE_REGEX_TEXT
         = "^\\s*CREATE\\s+TABLE\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'" + NAMES_AND_TYPES_REGEX_TEXT + ")\\)$";
   static const boost::regex CREATE_TABLE_REGEX(CREATE_TABLE_REGEX_TEXT, boost::regex_constants::icase);
@@ -108,7 +108,7 @@ SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & st
   }
   
   std::string table = match_results["TABLE"].str();
-  std::vector<TableColumn> table_columns = parseTableColumns(match_results["COLUMNS"].str());
+  std::vector<TableColumn> table_columns = parse_table_columns(match_results["COLUMNS"].str());
   if (0 == table_columns.size()) {
     Utils::warning(" [SqlParser] invalid CREATE TABLE syntax: passed column definitions are empty or they contain errors");
     return new UnknownStatement();
@@ -117,7 +117,7 @@ SqlStatement const * SqlParser::parseCreateTableStatement(std::string const & st
   return new CreateTableStatement(table, table_columns);
 }
 
-SqlStatement const * SqlParser::parseInsertStatement(std::string const & statement_text) const {
+SqlStatement const * SqlParser::parse_insert_statement(std::string const & statement_text) const {
   static const std::string INSERT_REGEX_TEXT
         = "^\\s*INSERT\\s+INTO\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'"
           + CSV_REGEX_TEXT
@@ -135,8 +135,8 @@ SqlStatement const * SqlParser::parseInsertStatement(std::string const & stateme
   }
   
   std::string table = match_results["TABLE"].str();
-  std::vector<std::string> column_names = parseCommaSeparatedValues(match_results["COLUMNS"].str());
-  std::vector<std::string> values = parseCommaSeparatedValues(match_results["VALUES"].str());
+  std::vector<std::string> column_names = parse_comma_separated_values(match_results["COLUMNS"].str());
+  std::vector<std::string> values = parse_comma_separated_values(match_results["VALUES"].str());
   
   if (column_names.size() != values.size()) {
     Utils::info(" [SqlParser] invalidINSERT statement syntax: columns count is not equal to values count");
@@ -146,7 +146,7 @@ SqlStatement const * SqlParser::parseInsertStatement(std::string const & stateme
   return new InsertStatement(table, column_names, values);
 }
 
-SqlStatement const * SqlParser::parseSelectStatement(std::string const & statement_text) const {
+SqlStatement const * SqlParser::parse_select_statement(std::string const & statement_text) const {
   static const std::string SELECT_REGEX_TEXT
         = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|" + CSV_REGEX_TEXT + "))\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
   static const boost::regex SELECT_REGEX(SELECT_REGEX_TEXT, boost::regex_constants::icase);
@@ -168,10 +168,10 @@ SqlStatement const * SqlParser::parseSelectStatement(std::string const & stateme
     return new SelectStatement(table_match.str(), std::vector<std::string>());
   }
   
-  return new SelectStatement(table_match.str(), parseCommaSeparatedValues(what_match.str()));
+  return new SelectStatement(table_match.str(), parse_comma_separated_values(what_match.str()));
 }
 
-std::vector<std::string> SqlParser::parseCommaSeparatedValues(std::string const & values_string) const {
+std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {
   static const std::string COMMA_SEPARATED_VALUE_REGEX_TEXT
         = "^\\s*(?:(?:(?'VALUE'\\w+)\\s*,)|(?'VALUE'\\w+))\\s*";
   static const boost::regex COMMA_SEPARATED_VALUE_REGEX(COMMA_SEPARATED_VALUE_REGEX_TEXT, boost::regex_constants::icase);
@@ -198,7 +198,7 @@ std::vector<std::string> SqlParser::parseCommaSeparatedValues(std::string const 
 /**
  * Returns an empty vector if any syntax errors are found
  */
-std::vector<TableColumn> SqlParser::parseTableColumns(std::string const & columns_string) const {
+std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & columns_string) const {
   static const std::string PARSE_ONE_COLUMN_NAME_AND_TYPE_REGEX_TEXT
         = "^(?:(?:" 
           + COLUMN_NAME_AND_TYPE_REGEX_TEXT 
