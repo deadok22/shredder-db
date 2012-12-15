@@ -11,8 +11,9 @@ Page::~Page()
   delete data_;
 }
 
-char* Page::get_data()
+char* Page::get_data(bool is_read_only)
 {
+  dirty_ = !is_read_only;
   return data_;
 }
 
