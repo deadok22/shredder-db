@@ -91,35 +91,4 @@ bool DiskManager::write_page(Page * page)
 
 
 
-//TEST_CODE
-#ifdef TEST_DISKMAN
-#include <iostream>
-using namespace std;
-int main() {
-/*  DBInfo di;
-  di.root_path = "./";
-
-
-  InfoPool::get_instance()->set_db_info(di);
-  
-  
-  DiskManager dm("file1");
-
-  char * buf = new char[InfoPool::get_instance()->get_db_info()->page_size];
-  dm.read_page(10,buf);
-
-
-
-  buf[0] = '1';
-  cout<<buf<<endl;
-
-  dm.write_page(0,buf);
-  char * buf1 = new char[InfoPool::get_instance()->get_db_info()->page_size];;
-  dm.read_page(0,buf1);
-  cout<<buf1<<endl;
-*/
-  return 0;
-}
-#endif
-
 
