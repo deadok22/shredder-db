@@ -10,16 +10,16 @@ DBFacade * DBFacade::get_instance() {
   return instance_;
 }
 
-void DBFacade::execude_statement(SqlStatement const * stmt) {
+void DBFacade::execute_statement(SqlStatement const * stmt) {
   switch (stmt->get_type()) {
     case SELECT:
-      execude_statement((SelectStatement const *) stmt);
+      execute_statement((SelectStatement const *) stmt);
       break;
     case INSERT:
-      execude_statement((InsertStatement const *) stmt);
+      execute_statement((InsertStatement const *) stmt);
       break;
     case CREATE_TABLE:
-      execude_statement((CreateTableStatement const *) stmt);
+      execute_statement((CreateTableStatement const *) stmt);
       break;
     case CREATE_INDEX:
       //TODO IMPL;
@@ -36,7 +36,7 @@ void DBFacade::execude_statement(SqlStatement const * stmt) {
   }
 }
 
-void DBFacade::execude_statement(CreateTableStatement const * stmt) {
+void DBFacade::execute_statement(CreateTableStatement const * stmt) {
   Utils::info("[DBFacade][EXEC_START] Create statement");
 
   std::vector<TableColumn> columns = stmt->get_columns();
@@ -62,10 +62,10 @@ void DBFacade::execude_statement(CreateTableStatement const * stmt) {
   Utils::info("[DBFacade][EXEC_END] Create statement");
 }
 
-void DBFacade::execude_statement(SelectStatement const * stmt) {
+void DBFacade::execute_statement(SelectStatement const * stmt) {
   Utils::info("[EXEC_START] Select statement");
 }
 
-void DBFacade::execude_statement(InsertStatement const * stmt) {
+void DBFacade::execute_statement(InsertStatement const * stmt) {
   Utils::info("[EXEC_START] Insert statement");
 }

@@ -67,7 +67,7 @@ void repl() {
     } else {
       SqlStatement const * stmt = parser.parse(command);
 
-      DBFacade::get_instance()->execude_statement(stmt);
+      DBFacade::get_instance()->execute_statement(stmt);
       delete stmt;
     }
   }
