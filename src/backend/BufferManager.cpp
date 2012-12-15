@@ -13,12 +13,23 @@ BufferManager::BufferManager()
 
 BufferManager::~BufferManager()
 {
-  Utils::log("[BufferManager] call destructor in buffer, free page");        
+  Utils::log("[BufferManager] call destructor in buffer, save and free page");        
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
     disk_mng_.write_page(*i);
     delete *i;
   }
+}
+
+void BufferManager::purge()
+{
+  Utils::log("[BufferManager] purge buffer");        
+  for(vector<Page*>::iterator i = buffer_.begin(),
+  e = buffer_.end(); i != e;++i){
+    disk_mng_.write_page(*i);
+    delete (*i);
+  }
+  buffer_.clear();
 }
 
 void BufferManager::force()

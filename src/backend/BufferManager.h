@@ -14,11 +14,11 @@ using std::vector;
 class BufferManager
 {
 public:
-
   static BufferManager & get_instance();
 
-  void force();
   Page& get_page(size_t page_id,string const& fname);
+  void purge();
+  void force();
 
 private:
 
@@ -37,6 +37,7 @@ private:
   
 // TO-DO map
 
+private:
 // closed  
   BufferManager(BufferManager const&);
   BufferManager& operator=(BufferManager const&);
