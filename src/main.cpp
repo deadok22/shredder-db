@@ -42,6 +42,9 @@ void describe_table(string const & table_name) {
     std::cout << DataType::describe((TypeCode)metadata->attribute(attr_ind).type_name(), metadata->attribute(attr_ind).size());
   }
   std::cout << std::endl;
+
+  std::cout << "Stat: Rec size is " << metadata->record_size() << "; Recs per page: " <<  metadata->records_per_page();
+  std::cout << "; Bit mask size is " << metadata->space_for_bit_mask() << ";" << std::endl;
   //TODO show indeces
 }
 
