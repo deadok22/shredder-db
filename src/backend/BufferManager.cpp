@@ -1,5 +1,9 @@
 #include "BufferManager.h"
 
+BufferManager & BufferManager::get_instance() {
+  static BufferManager bm;
+  return bm;
+}
 
 BufferManager::BufferManager()
  : max_size_(InfoPool::get_instance()->get_db_info()->max_page_cnt)
