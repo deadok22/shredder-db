@@ -12,7 +12,6 @@ HeapFileManager & HeapFileManager::getInstance() {
 
 bool HeapFileManager::processInsertRecord(
   TableMetaData const & table,
-  char * dest,
   std::vector<std::string> const & column_names,
   std::vector<std::string> const & column_values) {
 

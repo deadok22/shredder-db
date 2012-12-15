@@ -9,20 +9,15 @@ class HeapFileManager {
 public:
   bool processInsertRecord(
     TableMetaData const & table,
-    char * dest,
     std::vector<std::string> const & column_names,
     std::vector<std::string> const & column_values);
 
   bool processDeleteRecord(/* TODO */);
-
-  //TODO temporary method for testing, remove it!
   void printAllGetRecords(/* TODO */);
 
   static HeapFileManager & getInstance();
 
-#ifndef TEST_HFM
 private:
-#endif
   static HeapFileManager * instance_;
 
   // Page & get_page_for_insert(TableMetaData const & table);
