@@ -1,7 +1,11 @@
 #pragma once
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm> 
 #include <string>
+#include <Page.h>
+#include "../common/Utils.h"
+#include "../common/InfoPool.h"
 
 
 using std::string;
@@ -9,24 +13,24 @@ using std::string;
 class DiskManager
 {
 public:
-  bool read_page(size_t page_id, char *buf);
-  bool write_page(size_t page_id, char *buf);
-
-  size_t allocate();
-  bool deallocate(size_t page_id);
+  bool read_page(Page * page);
+  bool write_page(Page * page);
 
   DiskManager();
 
-  DiskManager(string const& name);
-  bool update_context();
-  bool init_context();// change handler of file
 private:
-  DiskManager(DiskManager const&);
-  DiskManager& operator=(DiskManager const&);
  
+  bool is_allocated(size_t page_id);
+
+  bool update_context();
+  bool init_file();// change handler of file
+
   string fname_;
   FILE* file_;
 
+// closed
+  DiskManager(DiskManager const&);
+  DiskManager& operator=(DiskManager const&);  
 };
 
 

@@ -1,49 +1,53 @@
 #include "BufferManager.h"
-#include "DiskManager.h"
-#include "Page.h"
-#include "../common/Utils.h"
-#include "../common/InfoPool.h"
 
 
 BufferManager::BufferManager()
- : max_size_(InfoPool::get_instance()->get_db_info()->count_page)
+ : max_size_(InfoPool::get_instance()->get_db_info()->max_page_cnt)
 {  
   Utils::log("[buffer_manager] create object buffmanager");
 }
 
 BufferManager::~BufferManager()
 {
+  Utils::log("[buffer_manager] call destructor in buffer, free page");        
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
-    if( (*i)->isDirty() ) 
-      save_page(*i);
+    disk_mng_.write_page(*i)
     delete *i;      
   }  
 }
 
-Page* BufferManager::get_page(size_t page_id)
+Page& BufferManager::get_page(size_t page_id,string const& fname)
 {
   Page* p = 0;
-  if( !( p = find_page(page_id)) ){
+  if( !( p = find_page(page_id,fname)) ){
+    p = new Page(page_id,fname); // pin default    
     if( buffer_.size() < max_size_){
       // append in back
-      if(load_page(page_id,&p)){
+      if( disk_mng_.read_page(p) ){
         Utils::log("[buffer_manager] page appended in buffer");        
         buffer_.push_back(p);
-      }          
+      } else {
+        delete p;
+        exit(EXIT_FAILURE);        
+      }         
     }else {
-      replace(page_id);
+      if( !replace(p) ){
+        delete p;
+        exit(EXIT_FAILURE);
+      }
     }    
-  }   
-  return p;   
+  } 
+  p->pin();
+  return *p;   
 }
 
 
-Page* BufferManager::find_page(size_t page_id)
+Page* BufferManager::find_page(size_t page_id,string const& fname)
 {
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
-    if( (*i)->get_pid() == page_id){
+    if( (*i)->get_pid() == page_id && (*i)->get_fname() == fname ){
       Utils::log("[buffer_manager] found page in buffer");      
       return *i;
     }
@@ -67,38 +71,25 @@ vector<Page*>::iterator BufferManager::find_unpinned_page()
 }
 
 
-bool BufferManager::replace(size_t page_id)
+bool BufferManager::replace(Page * p)
 {
   vector<Page*>::iterator i;
-  if( (i = find_unpinned_page())!= buffer_.end()){
+  if( (i = find_unpinned_page()) != buffer_.end()){
     
-    if( (*i)->isDirty() )  {
-      if(save_page(*i)){
-        delete *i;
-        if( load_page(page_id,&(*i)) )
-          return true;  
-      }
-    } else {
+    if( disk_mng_.write_page(*i) ){
       delete *i;
-      if( load_page(page_id,&(*i)) )
-        return true;       
+      *i = p;
+      Utils::log("[buffer_manager] replace page and delete unpinned page");
+      if( disk_mng_.read_page(p) )
+        return true;
     }
   }
-  Utils::log("[buffer_manager] method replace is failed");
+  Utils::log("[buffer_manager] method replace is failed", ERROR);
   return false;
 }
 
-bool BufferManager::save_page(Page * page)
-{
-  return disk_mng_.write_page(page->get_pid(),page->get_data());
-}
 
 
-bool BufferManager::load_page(size_t page_id,Page** page)
-{
-  *page = new Page(page_id);
-  return disk_mng_.read_page(page_id, (*page)->get_data());
-}
 
 
 
@@ -111,26 +102,19 @@ using namespace std;
 int main() {
   DBInfo di;
   di.root_path = "./";
-  di.page_size = 4096;
-  di.cur_file = "file";
-  di.count_page = 10;
+  
+  di.max_page_cnt = 1;
   InfoPool::get_instance()->set_db_info(di);
-  {  
-    DiskManager dm("file");
-
-    char * buf = new char[InfoPool::get_instance()->get_db_info()->page_size];
-    buf[0] = '1';
-    for(int i = 0; i < 11;++i)
-      dm.write_page(i,buf);
-  }
   BufferManager bf;
 
-  for(int i = 0; i < 11;++i)
-    bf.get_page(i);
-  
-    
+  Page& p = bf.get_page(0,"file");  
+  char * data = p.get_data();
+  data[0]='!';
+  p.set_dirty();
+  p.unpin();
 
-   
+  bf.get_page(0,"file");   
+
   return 0;
 }
 #endif
