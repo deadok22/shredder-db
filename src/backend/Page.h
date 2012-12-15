@@ -15,7 +15,7 @@ public:
   size_t get_pid() const;
   string const & get_fname() const;
   
-
+ 
   void set_dirty();
   void pin(); // +1 
   void unpin(); // -1 if (pin > 0)
