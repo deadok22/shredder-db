@@ -141,3 +141,7 @@ void PagesDirectory::init_directory(std::string const & heap_file_name, size_t r
   *(data + 1) = records_per_page;
   first_page.unpin();
 }
+
+PagesDirectory::NotEmptyPagesIterator PagesDirectory::get_iterator() {
+  return PagesDirectory::NotEmptyPagesIterator(*this);
+}
