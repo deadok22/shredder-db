@@ -34,12 +34,12 @@ Page& BufferManager::get_page(size_t page_id,string const& fname)
         Utils::log("[buffer_manager] page appended in buffer, current size buffer: "+ std::to_string(buffer_.size()) );
       } else {
         delete p;
-        exit(EXIT_FAILURE);        
+        Utils::critical_error();       
       }         
     }else {
       if( !replace(p) ){
         delete p;
-        exit(EXIT_FAILURE);
+        Utils::critical_error();
       }
     }    
   } 

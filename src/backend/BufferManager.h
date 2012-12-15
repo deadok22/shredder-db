@@ -71,6 +71,7 @@ int main() {
   Page& p2 = bf.get_page(1,"file");
   p1.set_dirty();    
 
+  bf.get_page(2,"file");
 
   return 0;
 }
