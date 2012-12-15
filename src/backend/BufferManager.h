@@ -13,11 +13,15 @@ using std::vector;
 class BufferManager
 {
 public:
+
+  static BufferManager & get_instance();
+
   Page& get_page(size_t page_id,string const& fname);
-  BufferManager();
-  ~BufferManager();
 
 private:
+
+  BufferManager();
+  ~BufferManager();
 
   Page* find_page(size_t page_id, string const& fname);
   vector<Page*>::iterator find_unpinned_page();
