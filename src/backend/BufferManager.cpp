@@ -66,7 +66,7 @@ vector<Page*>::iterator BufferManager::find_unpinned_page()
 {
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
-    if( (*i)->isUnpinned()){
+    if( (*i)->is_unpinned()){
       Utils::log("[buffer_manager] found unpinned page in buffer");      
       return i;
     }
@@ -103,7 +103,8 @@ int main() {
   
   di.max_page_cnt = 1;
   InfoPool::get_instance()->set_db_info(di);
-  BufferManager bf;
+  
+  BufferManager & bf = BufferManager::get_instance();
 
   Page& p = bf.get_page(0,"file");  
   char * data = p.get_data();

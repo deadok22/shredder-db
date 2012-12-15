@@ -27,12 +27,12 @@ string const & Page::get_fname() const
   return fname_;
 }
 
-bool Page::isUnpinned()
+bool Page::is_unpinned()
 {
   return pin_count_ == 0;
 }
 
-bool Page::isDirty()
+bool Page::is_dirty()
 {
   return dirty_;
 }

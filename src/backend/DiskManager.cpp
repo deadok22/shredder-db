@@ -73,7 +73,7 @@ bool DiskManager::read_page(Page * page)
 
 bool DiskManager::write_page(Page * page)
 {
-  if( !page->isDirty() ) return true;
+  if( !page->is_dirty() ) return true;
   if( !update_context(page->get_fname()))
     return false;
   
