@@ -43,7 +43,7 @@ bool DiskManager::is_allocated(size_t page_id)
   fseek (file_, 0, SEEK_END);
   long int cur_page_cnt = ftell (file_) / Page::PAGE_SIZE;
 
-  if( cur_page_cnt < page_id+1){
+  if( cur_page_cnt < (int)page_id+1){
     Utils::log("[disk_manager] page is'not allocated, create virtual page befor first writing");
     return false;
   }
