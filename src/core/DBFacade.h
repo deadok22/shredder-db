@@ -13,7 +13,7 @@ public:
 
 private:
   static DBFacade * instance_;
-
+  void create_empty_file(std::string const & fname);
 };
 
 

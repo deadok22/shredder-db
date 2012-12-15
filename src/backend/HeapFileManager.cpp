@@ -2,6 +2,9 @@
 #include <iostream>
 
 #include "../common/DataType.h"
+#include "../common/InfoPool.h"
+#include "../common/Utils.h"
+#include "PagesDirectory.h"
 #include "HeapFileManager.h"
 
 HeapFileManager * HeapFileManager::instance_ = new HeapFileManager();
@@ -21,11 +24,14 @@ bool HeapFileManager::processInsertRecord(
   }
 
   //determine free place for storage
-  //Page page = get_page_for_insert(table);
-  //char * page_data = page.get_data();
-  char * page_data = dest;
-  //TODO mult on record size
-  int offset = 0;//take_free_slot(page_data);
+  PagesDirectory pd(get_heap_file_name(table.name()));
+  Page & page = pd.get_page_for_insert();
+  char * page_data = page.get_data();
+
+  int offset = take_free_slot(page_data);
+  Utils::info("[HeapFileManager] Record slot for insert is " + std::to_string(offset) +
+     ". Table: " + table.name() + "; PageId: " + std::to_string(page.get_pid()));
+  page_data += offset * table.record_size() + table.space_for_bit_mask();
   
   //save values in order
   for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
@@ -51,23 +57,22 @@ bool HeapFileManager::processInsertRecord(
         break;
     }
 
-    
     offset += attr_size;
   }
- // page.set_dirty();
 
+  page.set_dirty();
+  pd.increment_records_count(page.get_pid());
+  
   //relese page
-  //page.unpin();
+  page.unpin();
 
   return true;
 }
 
-/*
-Page & HeapFileManager::get_page_for_insert(TableMetaData const & table) {
-  //TODO
-  return NULL;
+std::string HeapFileManager::get_heap_file_name(std::string const & table_name) {
+  DBInfo * db_info = InfoPool::get_instance()->get_db_info();
+  return db_info->root_path + table_name + "/data";
 }
-*/
 
 int HeapFileManager::take_free_slot(char * page_data) {
   //NB: do we need to somehow check if page really contain free slot? Current impl assumes that this has already been checked
@@ -118,5 +123,15 @@ void HeapFileManager::print_record(TableMetaData const & table, char * page_data
   std::cout << std::endl;
 }
 
-//TODO temporary method for testing, remove it!
-void printAllGetRecords(/* TODO */) {}
+void HeapFileManager::print_all_records(TableMetaData const & table) {
+  PagesDirectory pd(get_heap_file_name(table.name()));
+  PagesDirectory::NotEmptyPagesIterator itr = pd.get_iterator();
+
+  while (itr.next()) {
+    char * data = itr->get_data();
+    //TODO support many records
+    data += table.space_for_bit_mask();
+    print_record(table, data);
+  }
+
+}
