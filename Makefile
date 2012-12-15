@@ -33,5 +33,12 @@ build_core: init build_common build_proto
 	g++ src/core/MetaDataProvider.cpp $(COPTS) -Ibuild/src/core -c -o build/MetaDataProvider.o
 	g++ src/core/DBFacade.cpp $(COPTS) -Ibuild/src/core -c -o build/DBFacade.o
 
-build: build_core build_common build_proto build_sqlparser
+build_backend: init build_common
+	-mkdir build/backend
+	g++ src/backend/DiskManager.cpp $(COPTS) -c -o build/DiskManager.o
+	g++ src/backend/BufferManager.cpp $(COPTS) -c -o build/BufferManager.o
+	g++ src/backend/Page.cpp $(COPTS) -c -o build/Page.o
+	g++ src/backend/PagesDirectory.cpp $(COPTS) -c -o build/PagesDirectory.o
+
+build: build_core build_common build_proto build_sqlparser build_backend
 	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -g3 -o shredder_db

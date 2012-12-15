@@ -23,14 +23,15 @@ BufferManager::~BufferManager()
 
 Page& BufferManager::get_page(size_t page_id,string const& fname)
 {
+  Utils::log("[buffer_manager] get page with page id: "+std::to_string(page_id) );        
   Page* p = 0;
   if( !( p = find_page(page_id,fname)) ){
     p = new Page(page_id,fname); // pin default    
     if( buffer_.size() < max_size_){
       // append in back
       if( disk_mng_.read_page(p) ){
-        Utils::log("[buffer_manager] page appended in buffer");        
         buffer_.push_back(p);
+        Utils::log("[buffer_manager] page appended in buffer, current size buffer: "+ std::to_string(buffer_.size()) );
       } else {
         delete p;
         exit(EXIT_FAILURE);        
@@ -67,7 +68,7 @@ vector<Page*>::iterator BufferManager::find_unpinned_page()
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
     if( (*i)->is_unpinned()){
-      Utils::log("[buffer_manager] found unpinned page in buffer");      
+      Utils::log("[buffer_manager] found unpinned page in buffer: "+ std::to_string( (*i)->get_pid() ) ) ;      
       return i;
     }
   Utils::log("[buffer_manager] not found unpinned page in buffer");
@@ -79,11 +80,10 @@ bool BufferManager::replace(Page * p)
 {
   vector<Page*>::iterator i;
   if( (i = find_unpinned_page()) != buffer_.end()){
-    
+    Utils::log("[buffer_manager] replace page and delete unpinned page");    
     if( disk_mng_.write_page(*i) ){
       delete *i;
       *i = p;
-      Utils::log("[buffer_manager] replace page and delete unpinned page");
       if( disk_mng_.read_page(p) )
         return true;
     }
@@ -93,30 +93,6 @@ bool BufferManager::replace(Page * p)
 }
 
 
-//TEST_CODE
-#ifdef TEST_BUFF_MNG
-#include <iostream>
-using namespace std;
-int main() {
-  DBInfo di;
-  di.root_path = "./";
-  
-  di.max_page_cnt = 1;
-  InfoPool::get_instance()->set_db_info(di);
-  
-  BufferManager & bf = BufferManager::get_instance();
-
-  Page& p = bf.get_page(0,"file");  
-  char * data = p.get_data();
-  data[0]='!';
-  p.set_dirty();
-  p.unpin();
-
-  bf.get_page(0,"file");   
-
-  return 0;
-}
-#endif
 
 
 

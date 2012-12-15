@@ -43,7 +43,7 @@ bool DiskManager::is_allocated(size_t page_id)
   fseek (file_, 0, SEEK_END);
   long int cur_page_cnt = ftell (file_) / Page::PAGE_SIZE;
 
-  if( cur_page_cnt < page_id+1){
+  if( cur_page_cnt < (int)page_id+1){
     Utils::log("[disk_manager] page is'not allocated, create virtual page befor first writing");
     return false;
   }
@@ -63,7 +63,7 @@ bool DiskManager::read_page(Page * page)
     Utils::log("[disk_manager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] read file");
+  Utils::log("[disk_manager] read in file page: "+ std::to_string(page->get_pid()) );
   if( fread(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
     Utils::log("[disk_manager] can't read from file",ERROR);
     return false;
@@ -81,7 +81,7 @@ bool DiskManager::write_page(Page * page)
     Utils::log("[disk_manager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] write file");
+  Utils::log("[disk_manager] write in file page: "+ std::to_string(page->get_pid()));
   if( fwrite(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
     Utils::log("[disk_manager] can't write in file",ERROR);
     return false;
