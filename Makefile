@@ -1,9 +1,8 @@
 
-D_KEY = -DDEBUG
-COPTS = -std=c++0x
+D_KEY = -DDEBUG 
+COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
-	g++ build/src/core/DBFacade.cpp build/MetaDataProvider.o build/common/Utils.o build/common/InfoPool.o build/gen/core/TableMetadata.o -lprotobuf -DTEST_DBF -DDEBUG -o test_dbf
 
 clean:
 	rm -rf build
@@ -35,4 +34,4 @@ build_core: init build_common build_proto
 	g++ src/core/DBFacade.cpp $(COPTS) -Ibuild/src/core -c -o build/DBFacade.o
 
 build: build_core build_common build_proto build_sqlparser
-	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -o shredder_db
+	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -g3 -o shredder_db

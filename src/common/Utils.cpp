@@ -6,7 +6,7 @@ void Utils::log(string const & msg, LogLevel log_level, ostream & stream) {
 #ifdef DEBUG  
   string str_log_lvl("\033[32m[INFO] ");
   if (log_level == ERROR) {
-    str_log_lvl = "\033[31m[ERROR] ";
+    str_log_lvl = "\033[31m[ERROR]   ";
   } else if (log_level == WARNING) {
     str_log_lvl = "\033[33m[WARNING] ";
   }

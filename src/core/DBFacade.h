@@ -6,10 +6,10 @@ class DBFacade {
 public:
   static DBFacade * get_instance();
 
-  void execude_statement(SqlStatement const *);
-  void execude_statement(CreateTableStatement const *);
-  void execude_statement(SelectStatement const *);
-  void execude_statement(InsertStatement const *);
+  void execute_statement(SqlStatement const *);
+  void execute_statement(CreateTableStatement const *);
+  void execute_statement(SelectStatement const *);
+  void execute_statement(InsertStatement const *);
 
 private:
   static DBFacade * instance_;
@@ -30,7 +30,7 @@ int main(void) {
   columns.push_back(age_column);
 
   CreateTableStatement c_stms("test_table", columns);
-  DBFacade::get_instance()->execude_statement(c_stms);
+  DBFacade::get_instance()->execute_statement(c_stms);
 
   return 0;
 }

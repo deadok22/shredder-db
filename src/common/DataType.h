@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 enum TypeCode {
   INT = 0,
   DOUBLE = 1,
@@ -38,6 +40,23 @@ class DataType {
     }
     static DataType get_varchar(size_t size) {
       return DataType(VARCHAR, size);
+    }
+    static std::string describe(TypeCode type, size_t type_length = 0) {
+      switch(type) {
+        case INT : {
+          return "INT";
+          break;
+        }
+        case DOUBLE : {
+          return "DOUBLE";
+          break;
+        }
+        case VARCHAR : {
+          return std::string("VARCHAR(") + std::to_string(type_length) + ")"; 
+          break;
+        }
+      }
+      return "UNKNOWN";
     }
   private:
     TypeCode type_;
