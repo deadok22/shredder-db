@@ -63,7 +63,7 @@ bool DiskManager::read_page(Page * page)
     Utils::log("[disk_manager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] read file");
+  Utils::log("[disk_manager] read in file page: "+ std::to_string(page->get_pid()) );
   if( fread(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
     Utils::log("[disk_manager] can't read from file",ERROR);
     return false;
@@ -81,7 +81,7 @@ bool DiskManager::write_page(Page * page)
     Utils::log("[disk_manager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] write file");
+  Utils::log("[disk_manager] write in file page: "+ std::to_string(page->get_pid()));
   if( fwrite(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
     Utils::log("[disk_manager] can't write in file",ERROR);
     return false;

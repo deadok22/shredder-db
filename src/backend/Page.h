@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <algorithm>
-#include "../common/InfoPool.h" 
+
  
 using std::string;
 

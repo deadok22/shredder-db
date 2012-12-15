@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cstdlib>
+#include <string>
 #include "DiskManager.h"
 #include "Page.h"
 #include "../common/Utils.h"
@@ -44,4 +45,34 @@ private:
 
 
 
+//TEST_CODE
+#ifdef TEST_BUFF_MNG
+#include <iostream>
+using namespace std;
+int main() {
+  DBInfo di;
+  di.root_path = "./";
+  
+  di.max_page_cnt = 1;
+  InfoPool::get_instance()->set_db_info(di);
+  
+  BufferManager & bf = BufferManager::get_instance();
+
+  Page& p = bf.get_page(0,"file");  
+  char * data = p.get_data();
+  data[0]='!';
+  p.set_dirty();
+  p.unpin();
+
+  Page& p1 = bf.get_page(1,"file");   
+
+  
+
+  Page& p2 = bf.get_page(1,"file");
+  p1.set_dirty();    
+
+
+  return 0;
+}
+#endif
 
