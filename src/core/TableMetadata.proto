@@ -1,5 +1,8 @@
 message TableMetaData {
   required string name = 1;
+  required int32 record_size = 4;
+  required int32 space_for_bit_mask = 5;
+  required int32 records_per_page = 6;
 
   message AttributeDescription {
     required string name = 1;

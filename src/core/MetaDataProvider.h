@@ -9,7 +9,7 @@
 class MetaDataProvider {
 public:
   static TableMetaData * get_meta_data(std::string const & struct_name);
-  static bool save_meta_data(TableMetaData const & meta_data);
+  static bool save_meta_data(TableMetaData * meta_data);
   static MetaDataProvider * get_instance();
 private:
   static MetaDataProvider * instance_;
