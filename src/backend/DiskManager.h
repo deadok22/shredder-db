@@ -17,7 +17,7 @@ public:
   bool write_page(Page * page);
 
   DiskManager();
-
+  ~DiskManager();
 private:
  
   bool is_allocated(size_t page_id);
