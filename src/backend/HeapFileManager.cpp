@@ -28,12 +28,13 @@ bool HeapFileManager::processInsertRecord(
   Page & page = pd.get_page_for_insert();
   char * page_data = page.get_data();
 
-  int offset = take_free_slot(page_data);
-  Utils::info("[HeapFileManager] Record slot for insert is " + std::to_string(offset) +
+  int slot_number = take_free_slot(page_data);
+  Utils::info("[HeapFileManager] Record slot for insert is " + std::to_string(slot_number) +
      ". Table: " + table.name() + "; PageId: " + std::to_string(page.get_pid()));
-  page_data += offset * table.record_size() + table.space_for_bit_mask();
+  page_data += slot_number * table.record_size() + table.space_for_bit_mask();
   
   //save values in order
+  int offset = 0;
   for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
     std::string attr_name = table.attribute(attr_ind).name();
     int attr_size = table.attribute(attr_ind).size();
@@ -129,9 +130,22 @@ void HeapFileManager::print_all_records(TableMetaData const & table) {
 
   while (itr.next()) {
     char * data = itr->get_data();
-    //TODO support many records
-    data += table.space_for_bit_mask();
-    print_record(table, data);
+    
+    unsigned records = table.records_per_page();
+    char * records_data = data + table.space_for_bit_mask();
+
+    while (records > 0) {
+      unsigned mask_offset = 0;
+      while (mask_offset < 8) {
+        if (((1 << (7 - mask_offset)) & (*data)) > 1) {
+          print_record(table, records_data);
+        }
+        if (--records == 0) { break; }
+        ++mask_offset;
+        records_data += table.record_size();
+      }
+      data += 1;
+    }
   }
 
 }
