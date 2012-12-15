@@ -85,6 +85,7 @@ bool DiskManager::write_page(Page * page)
     Utils::log("[DiskManager] can't write in file",ERROR);
     return false;
   }
+  page->reset_dirty();
   return true;
 }
 

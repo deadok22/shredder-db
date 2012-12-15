@@ -17,8 +17,16 @@ BufferManager::~BufferManager()
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
     disk_mng_.write_page(*i);
-    delete *i;      
-  }  
+    delete *i;
+  }
+}
+
+void BufferManager::force()
+{
+  Utils::log("[BufferManager] force pages");        
+  for(vector<Page*>::iterator i = buffer_.begin(),
+  e = buffer_.end(); i != e;++i)
+    disk_mng_.write_page(*i);
 }
 
 Page& BufferManager::get_page(size_t page_id,string const& fname)

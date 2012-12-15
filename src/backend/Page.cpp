@@ -52,3 +52,10 @@ void Page::set_dirty()
 {
   dirty_ = true;
 }
+
+void Page::reset_dirty()
+{
+  dirty_ = false;
+}
+
+
