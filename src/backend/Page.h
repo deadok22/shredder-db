@@ -10,8 +10,8 @@ class Page
 public:
   static const size_t PAGE_SIZE = 4096;  
   
-  Page(size_t pid, string const& fname, size_t pin_c = 0 , bool dirty = false );
-  char* get_data();
+  Page(size_t pid, string const& fname, size_t pin_c = 0 , bool dirty = false);
+  char* get_data(bool is_read_only = true);
   size_t get_pid() const;
   string const & get_fname() const;
   
