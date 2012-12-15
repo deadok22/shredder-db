@@ -30,7 +30,7 @@ bool DiskManager::init_file()
 
 bool DiskManager::update_context(string const & fname)
 {
-  if( cur_file != fname_){
+  if( fname != fname_){
     Utils::log("[disk_manager] update context(file):"+fname_+"->"+fname);
     fname_ = fname;
     return init_file();
@@ -56,7 +56,7 @@ bool DiskManager::read_page(Page * page)
   if( !update_context(page->get_fname()))
     return false;
     
-  if( !is_allocated(page->get_pid) )
+  if( !is_allocated(page->get_pid()) )
     return true;
    
   if(fseek(file_ , page->get_pid()*Page::PAGE_SIZE , SEEK_SET)){

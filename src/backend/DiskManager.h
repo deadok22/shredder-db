@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <algorithm> 
 #include <string>
-#include <Page.h>
+#include "Page.h"
 #include "../common/Utils.h"
 #include "../common/InfoPool.h"
 
@@ -22,7 +22,7 @@ private:
  
   bool is_allocated(size_t page_id);
 
-  bool update_context();
+  bool update_context(string const & fname);
   bool init_file();// change handler of file
 
   string fname_;

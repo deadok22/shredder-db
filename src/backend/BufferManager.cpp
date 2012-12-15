@@ -12,7 +12,7 @@ BufferManager::~BufferManager()
   Utils::log("[buffer_manager] call destructor in buffer, free page");        
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
-    disk_mng_.write_page(*i)
+    disk_mng_.write_page(*i);
     delete *i;      
   }  
 }
@@ -89,12 +89,6 @@ bool BufferManager::replace(Page * p)
 }
 
 
-
-
-
-
-
-
 //TEST_CODE
 #ifdef TEST_BUFF_MNG
 #include <iostream>
@@ -118,4 +112,8 @@ int main() {
   return 0;
 }
 #endif
+
+
+
+
 

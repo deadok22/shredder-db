@@ -1,6 +1,6 @@
 #include "Page.h"
 
-Page::Page(size_t pid, string const& fname, size_t pin_c = 1, bool dirty = false)
+Page::Page(size_t pid, string const& fname, size_t pin_c = 0, bool dirty = false)
  :fname_(fname) , page_id_(pid),pin_count_(pin_c),dirty_(dirty),data_( new char[PAGE_SIZE] )
 {
   std::fill(data,data+PAGE_SIZE,0);

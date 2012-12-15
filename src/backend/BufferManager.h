@@ -21,7 +21,7 @@ private:
 
   Page* find_page(size_t page_id, string const& fname);
   vector<Page*>::iterator find_unpinned_page();
-  bool replace(size_t page_id);
+  bool replace(Page *p);
   
 
   
@@ -36,3 +36,8 @@ private:
   BufferManager& operator=(BufferManager const&);
 
 };
+
+
+
+
+
