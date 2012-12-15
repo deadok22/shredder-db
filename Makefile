@@ -35,7 +35,7 @@ build_backend: init build_common
 	g++ src/backend/BufferManager.cpp $(COPTS) -c -o build/BufferManager.o
 	g++ src/backend/Page.cpp $(COPTS) -c -o build/Page.o
 	g++ src/backend/PagesDirectory.cpp $(COPTS) -c -o build/PagesDirectory.o
-	g++ src/backend/HeapFileManager.cpp $(COPTS) -c -o build/HeapFileManager.o
+	g++ src/backend/HeapFileManager.cpp $(COPTS) -Ibuild/src/core -c -o build/HeapFileManager.o
 
 build: build_core build_common build_proto build_sqlparser build_backend
 	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -g3 -o shredder_db

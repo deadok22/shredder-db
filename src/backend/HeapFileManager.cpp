@@ -62,7 +62,7 @@ bool HeapFileManager::processInsertRecord(
 
   page.set_dirty();
   pd.increment_records_count(page.get_pid());
-  
+
   //relese page
   page.unpin();
 
