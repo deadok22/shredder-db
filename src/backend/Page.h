@@ -17,6 +17,7 @@ public:
   
  
   void set_dirty();
+  void reset_dirty();
   void pin(); // +1 
   void unpin(); // -1 if (pin > 0)
   

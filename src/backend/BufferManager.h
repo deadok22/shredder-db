@@ -17,6 +17,7 @@ public:
 
   static BufferManager & get_instance();
 
+  void force();
   Page& get_page(size_t page_id,string const& fname);
 
 private:
