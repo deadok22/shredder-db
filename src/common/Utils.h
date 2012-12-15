@@ -14,7 +14,7 @@ public:
   //checks wether FS entry with given name exists. If is_dir is set checks that entry is directory otherwise entry must be file
   static bool check_existence(string const & path, bool is_dir);
 
-  static void critical_error() ;
+  static void critical_error();
   static void info(string const & msg, ostream & stream = std::cout);
   static void warning(string const & msg, ostream & stream = std::cout);
   static void error(string const & msg, ostream & stream = std::cout);
