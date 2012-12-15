@@ -79,6 +79,11 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   HeapFileManager &hfm = HeapFileManager::getInstance();
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
+  if (metadata == NULL) {
+    Utils::error("[DBFacade][Select stmt] Table " + stmt->get_table_name() + " doesn't exist");
+    return;
+  }
+
   hfm.print_all_records(*metadata);
 }
 
@@ -86,7 +91,13 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   HeapFileManager &hfm = HeapFileManager::getInstance();
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
+  if (metadata == NULL) {
+    Utils::error("[DBFacade][Insert stmt] Table " + stmt->get_table_name() + " doesn't exist");
+    return;
+  }
+
   hfm.processInsertRecord(*metadata, stmt->get_column_names(), stmt->get_values());
+  cout << "Insert OK" << std::endl;
 }
 
 void DBFacade::create_empty_file(std::string const & fname) {

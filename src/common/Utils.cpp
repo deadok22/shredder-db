@@ -15,7 +15,7 @@ void Utils::log(string const & msg, LogLevel log_level, ostream & stream) {
 }
 
 void Utils::critical_error() {
-  cout << "\033[31m[CRITICAL_ERROR]   " << "tortoise won, but we'll be back" << endl;
+  cout << "\033[31m[CRITICAL_ERROR]   " << "tortoise won, but we'll be back\033[00m" << endl;
   exit(EXIT_FAILURE);
 }
 

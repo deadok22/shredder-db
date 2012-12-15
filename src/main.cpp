@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 
+#include "backend/BufferManager.h"
 #include "common/InfoPool.h"
 #include "common/Utils.h"
 #include "core/DBFacade.h"
@@ -15,8 +16,7 @@ std::string read_command() {
 
   unsigned empty_in_a_row = 0;
 
-  while (true) {
-    getline(std::cin, command_chunck);
+  while (getline(std::cin, command_chunck)) {
     if (command_chunck.empty()) {
       if (++empty_in_a_row == 1) {
         return command;
@@ -28,6 +28,7 @@ std::string read_command() {
 
     command += (command.size() > 0 ? " " : "") + command_chunck;
   }
+  return command;
 }
 
 void describe_table(string const & table_name) {
@@ -61,9 +62,12 @@ void repl() {
     capitalize(&command);
 
     Utils::info("[REPL] execute \"" + command +"\"");
-    if (command.compare("QUIT") == 0) {
+    if (command.compare("QUIT") == 0 || command.compare("EXIT") == 0) {
       return;
-    } if (command.find("ABOUT ") == 0) {
+    } else if (command.compare("PURGE") == 0) {
+      BufferManager &bm = BufferManager::get_instance();
+      bm.purge();
+    } else if (command.find("ABOUT ") == 0) {
       std::string table_name = command.substr(6);
       Utils::info("[REPL] 'about' was called for " + table_name);
       describe_table(table_name);
@@ -91,6 +95,9 @@ int main(int argc, char ** argv) {
   if (!Utils::check_existence(current_root_path, true)) {
     Utils::info("[Common] Creating missed DB directory " + current_root_path);
     mkdir(current_root_path.c_str(), 0777);
+  }
+  if (current_root_path[current_root_path.size() - 1] != '/') {
+    current_root_path += '/';
   }
 
   repl();
