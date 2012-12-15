@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
 #include "common/InfoPool.h"
 #include "common/Utils.h"
@@ -26,7 +26,7 @@ std::string read_command() {
       empty_in_a_row = 0;
     }
 
-    command += command_chunck;
+    command += (command.size() > 0 ? " " : "") + command_chunck;
   }
 }
 
@@ -37,18 +37,25 @@ void describe_table(string const & table_name) {
     return;
   }
   std::cout << "Table " + table_name + " has the following attributes: " << std::endl;
-  for (unsigned attr_ind = 0; attr_ind < metadata->attribute_size(); ++attr_ind) {
+  for (int attr_ind = 0; attr_ind < metadata->attribute_size(); ++attr_ind) {
     std::cout << "  " + std::to_string(attr_ind + 1) + ". " << metadata->attribute(attr_ind).name() << " of type " ;
     std::cout << DataType::describe((TypeCode)metadata->attribute(attr_ind).type_name(), metadata->attribute(attr_ind).size());
   }
+  std::cout << std::endl;
   //TODO show indeces
+}
+
+void capitalize(std::string * s) {
+  for (unsigned i = 0; i < s->size(); ++i) {
+    s->at(i) = std::toupper(s->at(i));
+  }
 }
 
 void repl() {
   SqlParser parser;
   while (true) {
     std::string command = read_command();
-    boost::to_upper(command);
+    capitalize(&command);
 
     Utils::info("[REPL] execute \"" + command +"\"");
     if (command.compare("QUIT") == 0) {
@@ -72,12 +79,16 @@ int main(int argc, char ** argv) {
     return 0;
   }
 
-  //TODO create full path to dir
-
   InfoPool::get_instance()->get_db_info()->root_path = argv[1];
-  Utils::info("[Common] DB root path is " + InfoPool::get_instance()->get_db_info()->root_path);
   InfoPool::get_instance()->get_db_info()->max_page_cnt = std::stoi(argv[2]); 
   Utils::info("[Common] Max page # is " + std::to_string(InfoPool::get_instance()->get_db_info()->max_page_cnt));
+
+  std::string current_root_path = InfoPool::get_instance()->get_db_info()->root_path;
+  Utils::info("[Common] DB root path is " + current_root_path);
+  if (!Utils::check_existence(current_root_path, true)) {
+    Utils::info("[Common] Creating missed DB directory " + current_root_path);
+    mkdir(current_root_path.c_str(), 0777);
+  }
 
   repl();
 }

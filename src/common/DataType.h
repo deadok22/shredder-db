@@ -56,6 +56,7 @@ class DataType {
           break;
         }
       }
+      return "UNKNOWN";
     }
   private:
     TypeCode type_;

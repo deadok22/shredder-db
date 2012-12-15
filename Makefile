@@ -1,6 +1,6 @@
 
-D_KEY = -DDEBUG
-COPTS = -std=c++0x
+D_KEY = -DDEBUG 
+COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
 

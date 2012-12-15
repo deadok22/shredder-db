@@ -21,6 +21,15 @@ void DBFacade::execude_statement(SqlStatement const * stmt) {
     case CREATE_TABLE:
       execude_statement((CreateTableStatement const *) stmt);
       break;
+    case CREATE_INDEX:
+      //TODO IMPL;
+      break;
+    case UPDATE:
+      //TODO IMPL;
+      break;
+    case DELETE:
+      //TODO IMPL;
+      break;
     case UNKNOWN:
       Utils::warning("[DBF] Given statement is unknown");
       break;
