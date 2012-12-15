@@ -5,6 +5,8 @@
 #include "DBFacade.h"
 #include "../common/Utils.h" 
 #include "../common/InfoPool.h" 
+#include "../backend/PagesDirectory.h"
+#include "../backend/HeapFileManager.h"
 
 DBFacade * DBFacade::instance_ = new DBFacade();
 
@@ -62,19 +64,32 @@ void DBFacade::execute_statement(CreateTableStatement const * stmt) {
 
   MetaDataProvider::get_instance()->save_meta_data(&table_metadata);
 
-  //create file for data
+  //create heap file for data
   std::string table_folder = InfoPool::get_instance()->get_db_info()->root_path + table_metadata.name();
   std::string data_path = table_folder + "/data";
-  std::fstream output(data_path.c_str(), ios::out | ios::trunc | ios::binary);
-  output.close();
+
+  create_empty_file(data_path);
+  create_empty_file(PagesDirectory::get_directory_file_name(data_path));
+  PagesDirectory::init_directory(data_path, table_metadata.records_per_page());
 
   Utils::info("[DBFacade][EXEC_END] Create statement");
 }
 
 void DBFacade::execute_statement(SelectStatement const * stmt) {
-  Utils::info("[EXEC_START] Select statement");
+  HeapFileManager &hfm = HeapFileManager::getInstance();
+  TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
+
+  hfm.print_all_records(*metadata);
 }
 
 void DBFacade::execute_statement(InsertStatement const * stmt) {
-  Utils::info("[EXEC_START] Insert statement");
+  HeapFileManager &hfm = HeapFileManager::getInstance();
+  TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
+
+  hfm.processInsertRecord(*metadata, stmt->get_column_names(), stmt->get_values());
+}
+
+void DBFacade::create_empty_file(std::string const & fname) {
+  std::fstream output(fname.c_str(), ios::out | ios::trunc);
+  output.close();
 }

@@ -61,7 +61,7 @@ bool MetaDataProvider::save_meta_data(TableMetaData * meta_data) {
   meta_data->set_space_for_bit_mask(space_for_bit_mask);
   meta_data->set_records_per_page(records_per_page);
 
-  Utils::info("Store metadata under " + meta_data_path);
+  Utils::info("[MetaDataProvider] Store metadata under " + meta_data_path);
   meta_data->SerializeToOstream(&output);
   output.close();
   

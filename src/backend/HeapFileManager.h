@@ -13,7 +13,7 @@ public:
     std::vector<std::string> const & column_values);
 
   bool processDeleteRecord(/* TODO */);
-  void printAllGetRecords(/* TODO */);
+  void print_all_records(TableMetaData const & table);
 
   static HeapFileManager & getInstance();
 
@@ -23,6 +23,8 @@ private:
   // Page & get_page_for_insert(TableMetaData const & table);
   void print_record(TableMetaData const & table, char * data);
   int take_free_slot(char * page_data);
+
+  std::string get_heap_file_name(std::string const & table_name);
 };
 
 #ifdef TEST_HFM
