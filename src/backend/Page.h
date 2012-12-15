@@ -31,4 +31,7 @@ private:
   bool dirty_;
   char* data_;
 
+private:
+  Page(Page const &);
+  Page & operator=(Page const &);
 };
