@@ -13,7 +13,7 @@ Page::~Page()
 
 char* Page::get_data(bool is_read_only)
 {
-  dirty_ = !is_read_only;
+  dirty_ = !dirty_? !is_read_only : dirty_ ;
   return data_;
 }
 
