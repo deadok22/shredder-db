@@ -9,20 +9,19 @@ DiskManager::DiskManager()
 
 bool DiskManager::init_file()
 {
-  string file = InfoPool::get_instance()->get_db_info()->root_path + fname_;
-  Utils::log("[disk_manager] open/create file: "+fname_);
+  Utils::log("[DiskManager] open/create file: "+fname_);
 
   string mode;   
-  if(Utils::check_existence(file, false))
+  if(Utils::check_existence(fname_, false))
     mode = "rb+";
   else
     mode = "wb+";
 
-  Utils::log("[disk_manager] choose mode for file: "+mode);
+  Utils::log("[DiskManager] choose mode for file: "+mode);
 
-  file_ = fopen(file.c_str(),mode.c_str());
+  file_ = fopen(fname_.c_str(),mode.c_str());
   if(!file_){
-    Utils::log("[disk_manager] can't open file: "+file,ERROR);
+    Utils::log("[DiskManager] can't open file: "+fname_,ERROR);
     return false;
   }
   return true;
@@ -31,7 +30,7 @@ bool DiskManager::init_file()
 bool DiskManager::update_context(string const & fname)
 {
   if( fname != fname_){
-    Utils::log("[disk_manager] update context(file):"+fname_+"->"+fname);
+    Utils::log("[DiskManager] update context(file):"+fname_+"->"+fname);
     fname_ = fname;
     return init_file();
   }
@@ -44,7 +43,7 @@ bool DiskManager::is_allocated(size_t page_id)
   long int cur_page_cnt = ftell (file_) / Page::PAGE_SIZE;
 
   if( cur_page_cnt < (int)page_id+1){
-    Utils::log("[disk_manager] page is'not allocated, create virtual page befor first writing");
+    Utils::log("[DiskManager] page is'not allocated, create virtual page befor first writing");
     return false;
   }
   return true;
@@ -60,12 +59,12 @@ bool DiskManager::read_page(Page * page)
     return true;
    
   if(fseek(file_ , page->get_pid()*Page::PAGE_SIZE , SEEK_SET)){
-    Utils::log("[disk_manager] can't change offset in file",ERROR);
+    Utils::log("[DiskManager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] read in file page: "+ std::to_string(page->get_pid()) );
+  Utils::log("[DiskManager] read in file page: "+ std::to_string(page->get_pid()) );
   if( fread(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
-    Utils::log("[disk_manager] can't read from file",ERROR);
+    Utils::log("[DiskManager] can't read from file",ERROR);
     return false;
   }
   return true;
@@ -78,48 +77,17 @@ bool DiskManager::write_page(Page * page)
     return false;
   
   if(fseek(file_ , page->get_pid()*Page::PAGE_SIZE , SEEK_SET)){
-    Utils::log("[disk_manager] can't change offset in file",ERROR);
+    Utils::log("[DiskManager] can't change offset in file",ERROR);
     return false;
   }
-  Utils::log("[disk_manager] write in file page: "+ std::to_string(page->get_pid()));
+  Utils::log("[DiskManager] write in file page: "+ std::to_string(page->get_pid()));
   if( fwrite(page->get_data(),sizeof(char),Page::PAGE_SIZE,file_) != Page::PAGE_SIZE ){
-    Utils::log("[disk_manager] can't write in file",ERROR);
+    Utils::log("[DiskManager] can't write in file",ERROR);
     return false;
   }
   return true;
 }
 
 
-
-//TEST_CODE
-#ifdef TEST_DISKMAN
-#include <iostream>
-using namespace std;
-int main() {
-/*  DBInfo di;
-  di.root_path = "./";
-
-
-  InfoPool::get_instance()->set_db_info(di);
-  
-  
-  DiskManager dm("file1");
-
-  char * buf = new char[InfoPool::get_instance()->get_db_info()->page_size];
-  dm.read_page(10,buf);
-
-
-
-  buf[0] = '1';
-  cout<<buf<<endl;
-
-  dm.write_page(0,buf);
-  char * buf1 = new char[InfoPool::get_instance()->get_db_info()->page_size];;
-  dm.read_page(0,buf1);
-  cout<<buf1<<endl;
-*/
-  return 0;
-}
-#endif
 
 

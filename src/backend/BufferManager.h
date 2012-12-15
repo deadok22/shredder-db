@@ -49,29 +49,24 @@ private:
 #ifdef TEST_BUFF_MNG
 #include <iostream>
 using namespace std;
+void test_replace()
+{
+  BufferManager & bf = BufferManager::get_instance();
+  for( size_t i = 0; i != 11; ++i)
+    bf.get_page(i, "file");
+    
+  
+}
+
 int main() {
   DBInfo di;
   di.root_path = "./";
   
-  di.max_page_cnt = 1;
+  di.max_page_cnt = 10;
   InfoPool::get_instance()->set_db_info(di);
   
-  BufferManager & bf = BufferManager::get_instance();
-
-  Page& p = bf.get_page(0,"file");  
-  char * data = p.get_data();
-  data[0]='!';
-  p.set_dirty();
-  p.unpin();
-
-  Page& p1 = bf.get_page(1,"file");   
-
   
-
-  Page& p2 = bf.get_page(1,"file");
-  p1.set_dirty();    
-
-  bf.get_page(2,"file");
+  test_replace();
 
   return 0;
 }

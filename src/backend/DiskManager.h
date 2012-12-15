@@ -34,3 +34,31 @@ private:
 };
 
 
+//TEST_CODE
+#ifdef TEST_DISKMAN
+#include <iostream>
+using namespace std;
+int main() {
+
+  
+  DiskManager dm;
+
+
+  Page *p = new Page(0,"file1");
+
+  char* buf = p->get_data(0);
+
+  buf[0] = '1';
+  buf[1] = '\0';  
+
+  dm.write_page(p);
+  buf[0] = '0';
+  buf[1] = '\0';
+  cout << buf << endl;   
+  dm.read_page(p); 
+  cout << buf << endl;
+
+  return 0;
+}
+#endif
+

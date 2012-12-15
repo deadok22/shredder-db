@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sys/stat.h>
 
+#include "../backend/Page.h"
 #include "../common/InfoPool.h"
 #include "../common/Utils.h"
 #include "MetaDataProvider.h"
@@ -29,10 +30,10 @@ TableMetaData * MetaDataProvider::get_meta_data(string const & struct_name) {
   return md;
 }
 
-bool MetaDataProvider::save_meta_data(TableMetaData const & meta_data) {
+bool MetaDataProvider::save_meta_data(TableMetaData * meta_data) {
   DBInfo * db_info = InfoPool::get_instance()->get_db_info();
   //move to consts
-  string table_folder = db_info->root_path + meta_data.name();
+  string table_folder = db_info->root_path + meta_data->name();
   string meta_data_path = table_folder + "/metadata";
 
   if (!Utils::check_existence(table_folder, true)) {
@@ -45,8 +46,24 @@ bool MetaDataProvider::save_meta_data(TableMetaData const & meta_data) {
     return false;
   }
 
+  unsigned total_rec_size = 0;
+  for (int attr_ind = 0; attr_ind < meta_data->attribute_size(); ++attr_ind) {
+    total_rec_size += meta_data->attribute(attr_ind).size();
+  }
+
+  meta_data->set_record_size(total_rec_size);
+  unsigned records_per_page = Page::PAGE_SIZE / total_rec_size; 
+  unsigned space_for_bit_mask = Page::PAGE_SIZE - records_per_page * total_rec_size;
+  while (8 * space_for_bit_mask < records_per_page) {
+    --records_per_page;
+    space_for_bit_mask += total_rec_size;
+  }
+  meta_data->set_space_for_bit_mask(space_for_bit_mask);
+  meta_data->set_records_per_page(records_per_page);
+
   Utils::info("Store metadata under " + meta_data_path);
-  meta_data.SerializeToOstream(&output);
+  meta_data->SerializeToOstream(&output);
   output.close();
+  
   return true;
 }
