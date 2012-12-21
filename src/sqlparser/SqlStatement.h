@@ -22,6 +22,8 @@ class SqlStatement {
       return type_;
     }
 
+    virtual ~SqlStatement() {}
+
   protected:
     SqlStatement(SqlStatementType type) : type_(type) {}
 
@@ -32,6 +34,9 @@ class SqlStatement {
 class UnknownStatement : public SqlStatement {
   public:
     UnknownStatement() : SqlStatement(UNKNOWN) {}
+    
+    virtual ~UnknownStatement() {}
+    
 };
 
 class TableTargetedStatement : public SqlStatement {
@@ -42,6 +47,9 @@ class TableTargetedStatement : public SqlStatement {
     std::string const & get_table_name() const {
       return table_name_;
     }
+    
+    virtual ~TableTargetedStatement() {}
+    
   private:
     std::string table_name_;
 };
@@ -54,6 +62,8 @@ class CreateTableStatement : public TableTargetedStatement {
     std::vector<TableColumn> const & get_columns() const {
       return columns_;
     }
+    
+    virtual ~CreateTableStatement() {}
     
   private:
     std::vector<TableColumn> columns_;
@@ -74,6 +84,8 @@ class SelectStatement : public TableTargetedStatement {
       return column_names_.empty();
     }
     
+    virtual ~SelectStatement() {}
+    
   private:
     std::vector<std::string> column_names_;
 };
@@ -90,6 +102,8 @@ class InsertStatement : public TableTargetedStatement {
     std::vector<std::string> const & get_values() const {
       return values_;
     }
+    
+    virtual ~InsertStatement() {}
     
   private:
     std::vector<std::string> column_names_;
