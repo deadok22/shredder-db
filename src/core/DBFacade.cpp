@@ -85,6 +85,7 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   }
 
   hfm.print_all_records(*metadata);
+  delete metadata;
 }
 
 void DBFacade::execute_statement(InsertStatement const * stmt) {
@@ -98,6 +99,7 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
 
   hfm.processInsertRecord(*metadata, stmt->get_column_names(), stmt->get_values());
   cout << "Insert OK" << std::endl;
+  delete metadata;
 }
 
 void DBFacade::create_empty_file(std::string const & fname) {

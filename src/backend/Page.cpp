@@ -6,7 +6,7 @@ Page::Page(size_t pid, string const& fname, size_t pin_c , bool dirty )
 }
 
 Page::~Page() {
-  delete data_;
+  delete [] data_;
 }
 
 char* Page::get_data(bool is_read_only) {
