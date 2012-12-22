@@ -62,10 +62,9 @@ bool HeapFileManager::processInsertRecord(
   }
 
   page.set_dirty();
+  page.unpin();   //relese ASAP
+  Utils::info("[HeapFileManager] Insertion finished. Unpin page #" + std::to_string(page.get_pid()));
   pd.increment_records_count(page.get_pid());
-
-  //relese page
-  page.unpin();
 
   return true;
 }
