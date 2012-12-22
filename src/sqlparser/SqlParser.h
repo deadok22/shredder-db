@@ -34,5 +34,8 @@ int main() {
   delete parser.parse("INSERT INTO table_name(a, b, c) VALUES(1, 2, 3)");
   delete parser.parse("insert into table_name(a, b, c) values(10, 11.2, \"one, two, three =)))\")");
   delete parser.parse("insert into table_name(a, b, c) values(\"\"\"\", \"\", a cat named \"Fluffy\")");
+  
+  delete parser.parse("CREATE INDEX my_index ON my_table(a, b DESC, c ASC) USING BTREE");
+  delete parser.parse("CREATE UNIQUE INDEX my_index ON my_table(a ASC) USING HASH");
 }
 #endif

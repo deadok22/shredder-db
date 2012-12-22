@@ -125,9 +125,9 @@ SqlStatement const * SqlParser::parse_create_table_statement(std::string const &
 
 SqlStatement const * SqlParser::parse_create_index_statement(std::string const & statement_text) const {
   static const std::string CREATE_INDEX_REGEX_TEXT
-        = "^\\s*CREATE\\s+(?:(?'UNIQUE'UNIQUE)\\s+)INDEX\\s+(?'INDEX'\\w+)\\s+ON\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'"
+        = "^\\s*CREATE\\s+(?:(?'UNIQUE'UNIQUE)\\s+)?INDEX\\s+(?'INDEX'\\w+)\\s+ON\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'"
           + CSV_REGEX_TEXT
-          + "\\)\\s+USING\\s+(?'TYPE'(?:BTREE)|(?:HASH)";
+          + ")\\)\\s+USING\\s+(?'TYPE'(?:BTREE)|(?:HASH))";
   static const boost::regex CREATE_INDEX_REGEX(CREATE_INDEX_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info("[SqlParser] parsing CREATE INDEX statement");
@@ -208,7 +208,7 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
 
 std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {
   static const std::string COMMA_SEPARATED_VALUE_REGEX_TEXT
-        = "^\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,]*))\\s*(?:$|,)";
+        = "^\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,]+))\\s*(?:$|,)";
   static const boost::regex COMMA_SEPARATED_VALUE_REGEX(COMMA_SEPARATED_VALUE_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info("[SqlParser] [parseCSV] parsing comma separated values");
@@ -217,7 +217,7 @@ std::vector<std::string> SqlParser::parse_comma_separated_values(std::string con
   std::string::const_iterator end = values_string.end();
   std::vector<std::string> values;
   boost::smatch match_results;
-  while (start != end && boost::regex_search(start, end, match_results, COMMA_SEPARATED_VALUE_REGEX)) {
+  while (boost::regex_search(start, end, match_results, COMMA_SEPARATED_VALUE_REGEX)) {
     Utils::info("[SqlParser] [parseCSV] parsed value: " + match_results["VALUE"].str());
     values.push_back(match_results["VALUE"].str());
     start = match_results[0].second;
@@ -237,7 +237,7 @@ std::vector<std::string> SqlParser::parse_comma_separated_values(std::string con
  */
 std::vector<CreateIndexStatement::Column> SqlParser::parse_create_index_columns(std::string const & columns_string) const {
   static const std::string PARSE_ONE_COLUMN_NAME_AND_DESC_ASC_REGEX_TEXT
-        = "^\\s*(?'COLUMN'\\w+)(?'ORDER'(?:ASC)|(?:DESC))?\\s*(?:,|$)";
+        = "^\\s*(?'NAME'\\w+)\\s*(?'ORDER'(?:ASC)|(?:DESC))?\\s*(?:,|$)";
   static const boost::regex COLUMN_REGEX(PARSE_ONE_COLUMN_NAME_AND_DESC_ASC_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info("[SqlParser] [parseIC] parsing index columns");
@@ -251,7 +251,12 @@ std::vector<CreateIndexStatement::Column> SqlParser::parse_create_index_columns(
     //TODO make sure it works if no ASC or DESC specified
     std::string order = match_results["ORDER"].str();
     bool is_descending = 0 != order.size() && ('d' == order[0] || 'D' == order[0]);
+    
+    Utils::info("[SqlParser] [parseIC] parsed index column: " + name + (is_descending ? " DESCENDING" : " ASCENDING"));
+    
     columns.push_back(CreateIndexStatement::Column(name, is_descending));
+    
+    start = match_results[0].second;
   }
   
   //TODO check that whole string is parsed.
