@@ -26,7 +26,7 @@ void DBFacade::execute_statement(SqlStatement const * stmt) {
       execute_statement((CreateTableStatement const *) stmt);
       break;
     case CREATE_INDEX:
-      //TODO IMPL;
+      execute_statement((CreateIndexStatement const *) stmt);
       break;
     case UPDATE:
       //TODO IMPL;
@@ -40,15 +40,44 @@ void DBFacade::execute_statement(SqlStatement const * stmt) {
   }
 }
 
-void DBFacade::execute_statement(CreateTableStatement const * stmt) {
-  Utils::info("[DBFacade][EXEC_START] Create statement");
+void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
+#ifdef DBFACADE_DBG
+  Utils::info("[DBFacade][EXEC_START] Create index statement");
+  Utils::info("  [DBFacade] Init index info");
+#endif
+  TableMetaData_IndexMetadata index_metadata;
+  index_metadata.set_name(stmt->get_index_name());
+  index_metadata.set_type(stmt->is_btree() ? 1 : 0);
+  index_metadata.set_unique(stmt->is_unique());
 
+  for (unsigned i = 0; i < stmt->get_columns().size(); ++i) {
+    CreateIndexStatement::Column column = stmt->get_columns()[i];
+    TableMetaData_IndexMetadata_KeyInfo *attr = index_metadata.add_keys();
+    attr->set_name(column.name);
+    attr->set_asc(!column.is_descending);
+  }
+
+  Utils::warning("[DBFacade] Actual index creation is not impelemnted");
+
+#ifdef DBFACADE_DBG
+  Utils::info("[DBFacade] Saving index metadata");
+#endif
+  if (!MetaDataProvider::add_index_info(stmt->get_table_name(), index_metadata)) {
+    Utils::warning("[DBFacade] Unable to save index description");
+  }
+}
+
+void DBFacade::execute_statement(CreateTableStatement const * stmt) {
+#ifdef DBFACADE_DBG
+  Utils::info("[DBFacade][EXEC_START] Create statement");
+#endif
   std::vector<TableColumn> columns = stmt->get_columns();
 
   TableMetaData table_metadata;
   table_metadata.set_name(stmt->get_table_name());
+#ifdef DBFACADE_DBG
   Utils::info("[DBFacade] Table name is " + stmt->get_table_name());
-  
+#endif
 
   for (std::vector<TableColumn>::iterator it = columns.begin();
       it != columns.end();
@@ -71,8 +100,9 @@ void DBFacade::execute_statement(CreateTableStatement const * stmt) {
   create_empty_file(data_path);
   create_empty_file(PagesDirectory::get_directory_file_name(data_path));
   PagesDirectory::init_directory(data_path, table_metadata.records_per_page());
-
+#ifdef DBFACADE_DBG
   Utils::info("[DBFacade][EXEC_END] Create statement");
+#endif
 }
 
 void DBFacade::execute_statement(SelectStatement const * stmt) {
@@ -80,7 +110,9 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
+#ifdef DBFACADE_DBG
     Utils::error("[DBFacade][Select stmt] Table " + stmt->get_table_name() + " doesn't exist");
+#endif
     return;
   }
 
@@ -93,7 +125,9 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
+#ifdef DBFACADE_DBG
     Utils::error("[DBFacade][Insert stmt] Table " + stmt->get_table_name() + " doesn't exist");
+#endif
     return;
   }
 

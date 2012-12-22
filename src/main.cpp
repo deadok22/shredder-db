@@ -46,7 +46,19 @@ void describe_table(string const & table_name) {
 
   std::cout << "Stat: Rec size is " << metadata->record_size() << "; Recs per page: " <<  metadata->records_per_page();
   std::cout << "; Bit mask size is " << metadata->space_for_bit_mask() << ";" << std::endl;
-  //TODO show indeces
+  if (metadata->indices_size() != 0) {
+    std::cout << "Indices:" << std::endl;
+    for (int index_i = 0; index_i < metadata->indices_size(); ++index_i) {
+      TableMetaData_IndexMetadata index = metadata->indices(index_i);
+      std::cout << "  " << index_i + 1 << ". " << index.name() << " on attributes ";
+      for (int key_i = 0; key_i < index.keys_size(); ++key_i) {
+        TableMetaData_IndexMetadata_KeyInfo keyInfo = index.keys(key_i);
+        std::cout << keyInfo.name() << "(" << (keyInfo.asc() ? "ASC" : "DESC") << "); ";
+      }
+      std::cout << "based on " << (index.type() == 0 ? "HASH" : "BTREE") << std::endl;
+    }
+  }
+  delete metadata;
 }
 
 void capitalize(std::string * s) {

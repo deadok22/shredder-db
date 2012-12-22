@@ -13,8 +13,15 @@ message TableMetaData {
   repeated AttributeDescription attribute = 2;
 
   message IndexMetadata {
+    message KeyInfo {
+      required string name = 1;
+      required bool asc = 2;
+    }
+    
     required string name = 1;
-    required string type = 2;
+    required int32 type = 2;
+    required bool unique = 3;
+    repeated KeyInfo keys = 4;
   }
 
   repeated IndexMetadata indices = 3;

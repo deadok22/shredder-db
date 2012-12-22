@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <unordered_set>
 #include <sys/stat.h>
 
 #include "../common/DataType.h"
@@ -18,10 +19,43 @@ MetaDataProvider * MetaDataProvider::get_instance() {
   return MetaDataProvider::instance_;
 }
 
-TableMetaData * MetaDataProvider::get_meta_data(string const & struct_name) {
+bool MetaDataProvider::add_index_info(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
+  TableMetaData * table_metadata = get_meta_data(table_name);
+  if (table_metadata == NULL) {
+    std::cout << "[ERROR] There is no table with name " << table_name << std::endl;
+    return false;
+  }
+  for (int i = 0; i < table_metadata->indices_size(); ++i) {
+    if (table_metadata->indices(i).name().compare(ind_metadata.name()) == 0) {
+      std::cout << "[ERROR] Index with name " << ind_metadata.name() << " already exists for table " << table_name << std::endl;
+      return false;
+    }
+  }
+
+  std::unordered_set<std::string> existed_columns;
+  for (int i = 0; i < table_metadata->attribute_size(); ++i) {
+    existed_columns.insert(table_metadata->attribute(i).name());
+  }
+
+  for (int i = 0; i < ind_metadata.keys_size(); ++i) {
+    if (existed_columns.count(ind_metadata.keys(i).name()) == 0) {
+      std::cout << "[ERROR] There is no column " << ind_metadata.keys(i).name() << " in table with name " << table_name << std::endl;
+      return false;
+    }
+  }
+
+  Utils::info("[MetaDataProvider] Adding new index");
+  TableMetaData_IndexMetadata * new_index = table_metadata->add_indices();
+  *new_index = ind_metadata;
+  save_meta_data(table_metadata);
+  delete table_metadata;
+  return true;
+}
+
+TableMetaData * MetaDataProvider::get_meta_data(string const & table_name) {
   DBInfo & db_info = InfoPool::get_instance().get_db_info();
   //move to consts
-  string meta_data_path = db_info.root_path + struct_name + "/metadata";
+  string meta_data_path = db_info.root_path + table_name + "/metadata";
   if (!Utils::check_existence(meta_data_path, false)) { return NULL; }
 
   fstream input(meta_data_path.c_str(), ios::in | ios::binary);

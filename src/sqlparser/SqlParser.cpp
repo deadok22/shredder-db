@@ -31,9 +31,10 @@ static const std::string NAMES_AND_TYPES_REGEX_TEXT
         +")";
 
 SqlStatement const * SqlParser::parse(std::string const & statement_text) const {
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] entered sql statement parsing");
   Utils::info("[SqlParser] the statement is " + statement_text);
-
+#endif
   SqlStatement const * parsedStatement = 0;
   SqlStatementType type = get_sql_statement_type(statement_text);
   switch(type) {
@@ -72,27 +73,38 @@ SqlStatement const * SqlParser::parse(std::string const & statement_text) const 
       break;
     }
   }
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] leaving sql statement parsing");
+#endif
   return parsedStatement;
 }
 
 SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement_text) const {
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] recognizing sql statement type");
-  
+#endif
   if (boost::regex_match(statement_text, INSERT_START_REGEX)) {
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is INSERT");
+#endif
     return INSERT;
   }
   if (boost::regex_match(statement_text, SELECT_START_REGEX)) {
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is SELECT");
+#endif
     return SELECT;
   }
   if (boost::regex_match(statement_text, CREATE_TABLE_START_REGEX)) {
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is CREATE TABLE");
+#endif
     return CREATE_TABLE;
   }
   if (boost::regex_match(statement_text, CREATE_INDEX_START_REGEX)) {
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is CREATE [UNIQUE] INDEX");
+#endif
     return CREATE_INDEX;
   }
   //TODO add more statement types
@@ -104,9 +116,9 @@ SqlStatement const * SqlParser::parse_create_table_statement(std::string const &
   static const std::string CREATE_TABLE_REGEX_TEXT
         = "^\\s*CREATE\\s+TABLE\\s+(?'TABLE'\\w+)\\s*\\((?'COLUMNS'" + NAMES_AND_TYPES_REGEX_TEXT + ")\\)$";
   static const boost::regex CREATE_TABLE_REGEX(CREATE_TABLE_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsing CREATE TABLE statement");
-  
+#endif
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, CREATE_TABLE_REGEX)) {
     Utils::warning("[SqlParser] invalid CREATE TABLE statement syntax");
@@ -129,9 +141,9 @@ SqlStatement const * SqlParser::parse_create_index_statement(std::string const &
           + CSV_REGEX_TEXT
           + ")\\)\\s+USING\\s+(?'TYPE'(?:BTREE)|(?:HASH))";
   static const boost::regex CREATE_INDEX_REGEX(CREATE_INDEX_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsing CREATE INDEX statement");
-  
+#endif
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, CREATE_INDEX_REGEX)) {
     Utils::warning("[SqlParser] invalid CREATE INDEX statement syntax");
@@ -160,9 +172,9 @@ SqlStatement const * SqlParser::parse_insert_statement(std::string const & state
           + CSV_REGEX_TEXT
           + ")\\)$";
   static const boost::regex INSERT_REGEX(INSERT_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsing INSERT statement");
-  
+#endif
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, INSERT_REGEX)) {
     Utils::warning("[SqlParser] invalid INSERT statement syntax");
@@ -185,9 +197,9 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
   static const std::string SELECT_REGEX_TEXT
         = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|" + CSV_REGEX_TEXT + "))\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
   static const boost::regex SELECT_REGEX(SELECT_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsing SELECT statement");
-  
+#endif
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, SELECT_REGEX)) {
     Utils::warning("[SqlParser] invalid SELECT statement syntax");
@@ -196,9 +208,9 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
   
   boost::ssub_match what_match = match_results["WHAT"];
   boost::ssub_match table_match = match_results["TABLE"];
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsed: SELECT <WHAT: " + what_match.str() + "> FROM <TABLE:" + table_match.str() + ">");
-  
+#endif
   if ("*" == what_match.str()) {
     return new SelectStatement(table_match.str(), std::vector<std::string>());
   }
@@ -239,9 +251,9 @@ std::vector<CreateIndexStatement::Column> SqlParser::parse_create_index_columns(
   static const std::string PARSE_ONE_COLUMN_NAME_AND_DESC_ASC_REGEX_TEXT
         = "^\\s*(?'NAME'\\w+)\\s*(?'ORDER'(?:ASC)|(?:DESC))?\\s*(?:,|$)";
   static const boost::regex COLUMN_REGEX(PARSE_ONE_COLUMN_NAME_AND_DESC_ASC_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] [parseIC] parsing index columns");
-  
+#endif
   std::string::const_iterator start = columns_string.begin();
   std::string::const_iterator end = columns_string.end();
   std::vector<CreateIndexStatement::Column> columns;
@@ -279,9 +291,9 @@ std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & colu
           + COLUMN_NAME_AND_TYPE_REGEX_TEXT 
           + ")";
   static const boost::regex COLUMN_NAME_AND_TYPE_REGEX(PARSE_ONE_COLUMN_NAME_AND_TYPE_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] [parseTC] parsing table columns");
-  
+#endif
   std::string::const_iterator start = columns_string.begin();
   std::string::const_iterator end = columns_string.end();
   std::vector<TableColumn> columns;
@@ -289,7 +301,9 @@ std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & colu
   while(boost::regex_search(start, end, match_results, COLUMN_NAME_AND_TYPE_REGEX)) {
     std::string name = match_results["NAME"].str();
     std::string type = match_results["TYPE"].str();
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] [parseTC] parsed column: " + name + " of type " + type);
+#endif
     switch (type[0]) {
       //INT
       case 'i' : {}

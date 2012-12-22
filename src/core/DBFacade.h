@@ -10,6 +10,7 @@ public:
   void execute_statement(CreateTableStatement const *);
   void execute_statement(SelectStatement const *);
   void execute_statement(InsertStatement const *);
+  void execute_statement(CreateIndexStatement const *);
 
 private:
   static DBFacade * instance_;
