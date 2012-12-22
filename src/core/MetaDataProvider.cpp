@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sys/stat.h>
 
+#include "../common/DataType.h"
 #include "../backend/Page.h"
 #include "../common/InfoPool.h"
 #include "../common/Utils.h"
@@ -49,6 +50,9 @@ bool MetaDataProvider::save_meta_data(TableMetaData * meta_data) {
   unsigned total_rec_size = 0;
   for (int attr_ind = 0; attr_ind < meta_data->attribute_size(); ++attr_ind) {
     total_rec_size += meta_data->attribute(attr_ind).size();
+    if (meta_data->attribute(attr_ind).type_name() == VARCHAR) {
+      total_rec_size += 1;
+    }
   }
 
   meta_data->set_record_size(total_rec_size);

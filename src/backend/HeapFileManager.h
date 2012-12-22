@@ -16,11 +16,11 @@ public:
   void print_all_records(TableMetaData const & table);
 
   //returns a pointer to data related to a given record. If there is no such recprd returns NULL
-  void * get_record(unsigned page_id, unsigned slot_id);
+  void * get_record(TableMetaData const & table, unsigned page_id, unsigned slot_id);
 
-  int get_int_attr();
-  double get_double_attr();
-  std::string get_vchar_attr();
+  int get_int_attr(void * data, TableMetaData const & table, std::string const & attr_name);
+  double get_double_attr(void * data, TableMetaData const & table, std::string const & attr_name);
+  std::string get_vchar_attr(void * data, TableMetaData const & table, std::string const & attr_name);
 
   static HeapFileManager & get_instance();
 
@@ -30,6 +30,7 @@ private:
   // Page & get_page_for_insert(TableMetaData const & table);
   void print_record(TableMetaData const & table, char * data);
   int take_free_slot(char * page_data);
+  char * get_attr_value(void * data, TableMetaData const & table, std::string const & attr_name);
 
   std::string get_heap_file_name(std::string const & table_name);
 };

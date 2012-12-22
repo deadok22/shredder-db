@@ -5,6 +5,7 @@
 #include "../common/InfoPool.h"
 #include "../common/Utils.h"
 #include "PagesDirectory.h"
+#include "BufferManager.h"
 #include "HeapFileManager.h"
 
 HeapFileManager * HeapFileManager::instance_ = new HeapFileManager();
@@ -55,6 +56,7 @@ bool HeapFileManager::process_insert_record(
       case VARCHAR:
         std::string value_to_store = name_to_value.count(attr_name) == 0 ? std::string(attr_size, '\0') : name_to_value[attr_name];
         memcpy(page_data + offset, value_to_store.c_str(), attr_size);
+        *(page_data + offset + attr_size) = '\0';
         break;
     }
 
@@ -123,20 +125,46 @@ void HeapFileManager::print_record(TableMetaData const & table, char * page_data
   std::cout << std::endl;
 }
 
-void * HeapFileManager::get_record(unsigned page_id, unsigned slot_id) {
+void * HeapFileManager::get_record(TableMetaData const & table, unsigned page_id, unsigned slot_number) {
+  BufferManager &bm = BufferManager::get_instance();
+  Page &req_page = bm.get_page(page_id, table.name());
+
+  //todo check if something is recorded
+  char * data = new char[table.record_size()];
+  memcpy(data, req_page.get_data() + slot_number * table.record_size() + table.space_for_bit_mask(), table.record_size());
+
+  req_page.unpin();
+  return data;
+}
+
+
+char * HeapFileManager::get_attr_value(void * data, TableMetaData const & table, std::string const & attr_name) {
+  unsigned offset = 0;
+  for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
+    unsigned attr_size = table.attribute(attr_ind).size();
+    if (table.attribute(attr_ind).name().compare(attr_name) == 0) {
+      return (char *)data + offset;
+    }
+    offset += attr_size;
+  }
+  Utils::warning("[HFM] Unable to get data for " + attr_name + " attribute");
   return NULL;
 }
 
-int HeapFileManager::get_int_attr() {
-  return 0;
+//TODO remove code duplication
+int HeapFileManager::get_int_attr(void * data, TableMetaData const & table, std::string const & attr_name) {
+  char * attr_data = get_attr_value(data, table, attr_name);
+  return attr_data ? *((int *) attr_data) : 0;
 }
 
-double HeapFileManager::get_double_attr() {
-  return 0.0;
+double HeapFileManager::get_double_attr(void * data, TableMetaData const & table, std::string const & attr_name) {
+  char * attr_data = get_attr_value(data, table, attr_name);
+  return attr_data ? *((double *) attr_data) : 0;
 }
 
-std::string HeapFileManager::get_vchar_attr() {
-  return "";
+std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & table, std::string const & attr_name) {
+  char * attr_data = get_attr_value(data, table, attr_name);
+  return attr_data ? attr_data : "";
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
