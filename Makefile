@@ -1,5 +1,6 @@
 
-D_KEY = -DDEBUG
+# MAIN_DBG is for mostly for repl 
+D_KEY = -DDEBUG -DMAIN_DBG
 COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
@@ -38,4 +39,4 @@ build_backend: init build_common
 	g++ src/backend/HeapFileManager.cpp $(COPTS) -Ibuild/src/core -c -o build/HeapFileManager.o
 
 build: build_core build_common build_proto build_sqlparser build_backend
-	g++ src/main.cpp build/*.o $(COPTS) -Ibuild/src/core -lprotobuf -lboost_regex -g3 -o shredder_db
+	g++ src/main.cpp build/*.o $(COPTS) $(D_KEY) -Ibuild/src/core -lprotobuf -lboost_regex -g3 -o shredder_db

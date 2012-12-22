@@ -59,17 +59,23 @@ void repl() {
   SqlParser parser;
   while (true) {
     std::string command = read_command();
-    capitalize(&command);
+    std::string::size_type first_space = command.find_first_of(" ");
+    std::string fst_token = first_space == string::npos ? command : command.substr(0, first_space);
+    capitalize(&fst_token);
 
+#ifdef MAIN_DBG
     Utils::info("[REPL] execute \"" + command +"\"");
-    if (command.compare("QUIT") == 0 || command.compare("EXIT") == 0) {
+#endif
+    if (fst_token.compare("QUIT") == 0 || fst_token.compare("EXIT") == 0) {
       return;
-    } else if (command.compare("PURGE") == 0) {
+    } else if (fst_token.compare("PURGE") == 0) {
       BufferManager &bm = BufferManager::get_instance();
       bm.purge();
-    } else if (command.find("ABOUT ") == 0) {
+    } else if (fst_token.compare("ABOUT") == 0) {
       std::string table_name = command.substr(6);
+#ifdef MAIN_DBG
       Utils::info("[REPL] 'about' was called for " + table_name);
+#endif
       describe_table(table_name);
     } else {
       SqlStatement const * stmt = parser.parse(command);
@@ -88,15 +94,21 @@ int main(int argc, char ** argv) {
 
   InfoPool::get_instance()->get_db_info()->root_path = argv[1];
   InfoPool::get_instance()->get_db_info()->max_page_cnt = std::stoi(argv[2]);
+#ifdef MAIN_DBG
   Utils::info("[Common] Max page # is " + std::to_string(InfoPool::get_instance()->get_db_info()->max_page_cnt));
+#endif
   if (InfoPool::get_instance()->get_db_info()->max_page_cnt == 0) {
     Utils::warning("[Common] Max buffer page size is 0.");
   }
 
   std::string current_root_path = InfoPool::get_instance()->get_db_info()->root_path;
+#ifdef MAIN_DBG
   Utils::info("[Common] DB root path is " + current_root_path);
+#endif
   if (!Utils::check_existence(current_root_path, true)) {
+#ifdef MAIN_DBG
     Utils::info("[Common] Creating missed DB directory " + current_root_path);
+#endif
     mkdir(current_root_path.c_str(), 0777);
   }
   if (current_root_path[current_root_path.size() - 1] != '/') {
