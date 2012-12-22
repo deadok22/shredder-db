@@ -65,7 +65,7 @@ void DBFacade::execute_statement(CreateTableStatement const * stmt) {
   MetaDataProvider::get_instance()->save_meta_data(&table_metadata);
 
   //create heap file for data
-  std::string table_folder = InfoPool::get_instance()->get_db_info()->root_path + table_metadata.name();
+  std::string table_folder = InfoPool::get_instance().get_db_info().root_path + table_metadata.name();
   std::string data_path = table_folder + "/data";
 
   create_empty_file(data_path);

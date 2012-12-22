@@ -6,19 +6,19 @@ using namespace std;
 struct DBInfo {
   string root_path;
   size_t max_page_cnt;
-  string cur_file;
-
 };
 
 class InfoPool {
 public:
-  DBInfo * get_db_info();
-  void set_db_info(DBInfo db_info);
+  DBInfo & get_db_info();
+  void set_db_info(DBInfo const& db_info);
 
-  static InfoPool * get_instance();
+  static InfoPool & get_instance();
 private:
-  DBInfo db_info_;
-  static InfoPool * instance_; 
+  InfoPool();
+  ~InfoPool();
+  
+  DBInfo db_info_; 
 };
 
 #ifdef TEST_INFOPOOL

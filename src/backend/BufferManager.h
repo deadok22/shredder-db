@@ -65,7 +65,7 @@ int main() {
   di.root_path = "./";
   
   di.max_page_cnt = 10;
-  InfoPool::get_instance()->set_db_info(di);
+  InfoPool::get_instance().set_db_info(di);
   
   
   test_replace();

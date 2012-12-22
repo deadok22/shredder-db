@@ -72,8 +72,8 @@ bool HeapFileManager::process_insert_record(
 }
 
 std::string HeapFileManager::get_heap_file_name(std::string const & table_name) {
-  DBInfo * db_info = InfoPool::get_instance()->get_db_info();
-  return db_info->root_path + table_name + "/data";
+  DBInfo & db_info = InfoPool::get_instance().get_db_info();
+  return db_info.root_path + table_name + "/data";
 }
 
 int HeapFileManager::take_free_slot(char * page_data) {
