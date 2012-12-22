@@ -92,16 +92,16 @@ int main(int argc, char ** argv) {
     return 0;
   }
 
-  InfoPool::get_instance()->get_db_info()->root_path = argv[1];
-  InfoPool::get_instance()->get_db_info()->max_page_cnt = std::stoi(argv[2]);
+  InfoPool::get_instance().get_db_info().root_path = argv[1];
+  InfoPool::get_instance().get_db_info().max_page_cnt = std::stoi(argv[2]);
 #ifdef MAIN_DBG
-  Utils::info("[Common] Max page # is " + std::to_string(InfoPool::get_instance()->get_db_info()->max_page_cnt));
+  Utils::info("[Common] Max page # is " + std::to_string(InfoPool::get_instance().get_db_info().max_page_cnt));
 #endif
-  if (InfoPool::get_instance()->get_db_info()->max_page_cnt == 0) {
+  if (InfoPool::get_instance().get_db_info().max_page_cnt == 0) {
     Utils::warning("[Common] Max buffer page size is 0.");
   }
 
-  std::string current_root_path = InfoPool::get_instance()->get_db_info()->root_path;
+  std::string current_root_path = InfoPool::get_instance().get_db_info().root_path;
 #ifdef MAIN_DBG
   Utils::info("[Common] DB root path is " + current_root_path);
 #endif

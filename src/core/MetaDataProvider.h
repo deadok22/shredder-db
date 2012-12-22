@@ -22,7 +22,7 @@ private:
 int main() {
   DBInfo di;
   di.root_path = "";
-  InfoPool::get_instance()->set_db_info(di);
+  InfoPool::get_instance().set_db_info(di);
 
   TableMetaData md;
   md.set_name("test_table");

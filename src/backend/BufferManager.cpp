@@ -6,7 +6,7 @@ BufferManager & BufferManager::get_instance() {
 }
 
 
-BufferManager::BufferManager() : max_size_(InfoPool::get_instance()->get_db_info()->max_page_cnt){ 
+BufferManager::BufferManager() : max_size_(InfoPool::get_instance().get_db_info().max_page_cnt){ 
 #ifdef IO_BUFF_M 
   Utils::log("[BufferManager] create object buffmanager");
 #endif
@@ -29,8 +29,7 @@ void BufferManager::purge() {
 #ifdef IO_BUFF_M 
   Utils::log("[BufferManager] purge buffer");
 #endif
-  for(vector<Page*>::iterator i = buffer_.begin(),
-  e = buffer_.end(); i != e;++i){
+  for(vector<Page*>::iterator i = buffer_.begin(), e = buffer_.end(); i != e; ++i){
     disk_mng_.write_page(*i);
     delete (*i);
   }
