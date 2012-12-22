@@ -69,6 +69,53 @@ class CreateTableStatement : public TableTargetedStatement {
     std::vector<TableColumn> columns_;
 };
 
+
+class CreateIndexStatement : public TableTargetedStatement {
+  public:
+    struct Column {
+      public:
+        std::string name;
+        bool is_descending;
+        Column(std::string const & column_name, bool is_desc = false)
+          : name(column_name), is_descending(is_desc) {}
+    };
+  public:
+    CreateIndexStatement(std::string const & index_name,
+                         std::string const & table_name,
+                         std::vector<CreateIndexStatement::Column> const & columns,
+                         bool is_btree = false,
+                         bool is_unique = false) :
+        TableTargetedStatement(CREATE_INDEX, table_name),
+        index_name_(index_name),
+        columns_(columns),
+        is_btree_(is_btree),
+        is_unique_(is_unique) {}
+    
+    std::string const & get_index_name() const {
+      return index_name_;
+    }
+    
+    std::vector<CreateIndexStatement::Column> const & get_columns() const {
+      return columns_;
+    }
+    
+    bool is_unique() const {
+      return is_unique_;
+    }
+    
+    bool is_btree() const {
+      return is_btree_;
+    }
+    
+    virtual ~CreateIndexStatement() {}
+    
+  private:
+    std::string index_name_;
+    std::vector<CreateIndexStatement::Column> columns_;
+    bool is_unique_;
+    bool is_btree_;
+};
+
 //TODO add select from join statement
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {

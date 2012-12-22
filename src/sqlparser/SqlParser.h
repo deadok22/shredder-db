@@ -14,10 +14,12 @@ class SqlParser {
   private:
     SqlStatementType get_sql_statement_type(std::string const & statement_text) const;
     SqlStatement const * parse_create_table_statement(std::string const & statement_text) const;
+    SqlStatement const * parse_create_index_statement(std::string const & statement_text) const;
     SqlStatement const * parse_insert_statement(std::string const & statement_text) const;
     SqlStatement const * parse_select_statement(std::string const & statement_text) const;
     std::vector<std::string> parse_comma_separated_values(std::string const & values_string) const;
     std::vector<TableColumn> parse_table_columns(std::string const & columns_string) const;
+    std::vector<CreateIndexStatement::Column> parse_create_index_columns(std::string const & columns_string) const;
 };
 
 //TEST_CODE
