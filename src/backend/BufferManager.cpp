@@ -7,13 +7,17 @@ BufferManager & BufferManager::get_instance() {
 
 BufferManager::BufferManager()
  : max_size_(InfoPool::get_instance()->get_db_info()->max_page_cnt)
-{  
+{ 
+#ifdef IO_BUFF_M 
   Utils::log("[BufferManager] create object buffmanager");
+#endif
 }
 
 BufferManager::~BufferManager()
 {
-  Utils::log("[BufferManager] call destructor in buffer, save and free page");        
+#ifdef IO_BUFF_M 
+  Utils::log("[BufferManager] call destructor in buffer, save and free page");
+#endif
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
     disk_mng_.write_page(*i);
@@ -23,7 +27,9 @@ BufferManager::~BufferManager()
 
 void BufferManager::purge()
 {
-  Utils::log("[BufferManager] purge buffer");        
+#ifdef IO_BUFF_M 
+  Utils::log("[BufferManager] purge buffer");
+#endif
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i){
     disk_mng_.write_page(*i);
@@ -34,7 +40,9 @@ void BufferManager::purge()
 
 void BufferManager::force()
 {
-  Utils::log("[BufferManager] force pages");        
+#ifdef IO_BUFF_M 
+  Utils::log("[BufferManager] force pages");
+#endif
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
     disk_mng_.write_page(*i);
@@ -42,7 +50,9 @@ void BufferManager::force()
 
 Page& BufferManager::get_page(size_t page_id,string const& fname)
 {
-  Utils::log("[BufferManager] get page with page id: "+std::to_string(page_id) );        
+#ifdef IO_BUFF_M 
+  Utils::log("[BufferManager] get page with page id: "+std::to_string(page_id) );
+#endif
   Page* p = 0;
   if( !( p = find_page(page_id,fname)) ){
     p = new Page(page_id,fname); // pin default    
@@ -50,7 +60,9 @@ Page& BufferManager::get_page(size_t page_id,string const& fname)
       // append in back
       if( disk_mng_.read_page(p) ){
         buffer_.push_back(p);
+#ifdef IO_BUFF_M 
         Utils::log("[BufferManager] page appended in buffer, current size buffer: "+ std::to_string(buffer_.size()) );
+#endif
       } else {
         delete p;
         Utils::critical_error();       
@@ -72,10 +84,14 @@ Page* BufferManager::find_page(size_t page_id,string const& fname)
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
     if( (*i)->get_pid() == page_id && (*i)->get_fname() == fname ){
-      Utils::log("[BufferManager] found page in buffer");      
+#ifdef IO_BUFF_M 
+      Utils::log("[BufferManager] found page in buffer");
+#endif
       return *i;
     }
+#ifdef IO_BUFF_M 
   Utils::log("[BufferManager] not found page in buffer");
+#endif
   return 0;  
 }
 
@@ -87,10 +103,14 @@ vector<Page*>::iterator BufferManager::find_unpinned_page()
   for(vector<Page*>::iterator i = buffer_.begin(),
   e = buffer_.end(); i != e;++i)
     if( (*i)->is_unpinned()){
-      Utils::log("[BufferManager] found unpinned page in buffer: "+ std::to_string( (*i)->get_pid() ) ) ;      
+#ifdef IO_BUFF_M 
+      Utils::log("[BufferManager] found unpinned page in buffer: "+ std::to_string( (*i)->get_pid() ) );
+#endif
       return i;
     }
+#ifdef IO_BUFF_M 
   Utils::log("[BufferManager] not found unpinned page in buffer");
+#endif
   return buffer_.end();  
 }
 
@@ -99,7 +119,9 @@ bool BufferManager::replace(Page * p)
 {
   vector<Page*>::iterator i;
   if( (i = find_unpinned_page()) != buffer_.end()){
-    Utils::log("[BufferManager] replace page and delete unpinned page");    
+#ifdef IO_BUFF_M 
+    Utils::log("[BufferManager] replace page and delete unpinned page");
+#endif
     if( disk_mng_.write_page(*i) ){
       delete *i;
       *i = p;
@@ -107,7 +129,9 @@ bool BufferManager::replace(Page * p)
         return true;
     }
   }
+#ifdef IO_BUFF_M 
   Utils::log("[BufferManager] method replace is failed", ERROR);
+#endif
   return false;
 }
 

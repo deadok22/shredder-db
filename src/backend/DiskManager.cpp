@@ -95,7 +95,7 @@ bool DiskManager::write_page(Page * page)
 
 DiskManager::~DiskManager()
 {
-  fclose(file_) != 0);
+  fclose(file_) ;
 }
 
 
