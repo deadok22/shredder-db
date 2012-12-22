@@ -120,8 +120,8 @@ bool BufferManager::replace(Page * p) {
       if( disk_mng_.read_page(p)) { return true; }
     }
   }
-#ifdef IO_BUFF_M 
+
   Utils::log("[BufferManager] method replace is failed", ERROR);
-#endif
+
   return false;
 }
