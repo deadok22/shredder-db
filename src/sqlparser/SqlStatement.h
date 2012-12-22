@@ -41,7 +41,7 @@ class UnknownStatement : public SqlStatement {
 
 class TableTargetedStatement : public SqlStatement {
   protected:
-    TableTargetedStatement(SqlStatementType type, std::string table_name)
+    TableTargetedStatement(SqlStatementType type, std::string const & table_name)
       : SqlStatement(type), table_name_(table_name) {}
   public:
     std::string const & get_table_name() const {
@@ -56,7 +56,7 @@ class TableTargetedStatement : public SqlStatement {
 
 class CreateTableStatement : public TableTargetedStatement {
   public:
-    CreateTableStatement(std::string table_name, std::vector<TableColumn> columns)
+    CreateTableStatement(std::string const & table_name, std::vector<TableColumn> columns)
       : TableTargetedStatement(CREATE_TABLE, table_name), columns_(columns) {}
     
     std::vector<TableColumn> const & get_columns() const {
@@ -73,7 +73,7 @@ class CreateTableStatement : public TableTargetedStatement {
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {
   public:
-    SelectStatement(std::string table_name, std::vector<std::string> column_names)
+    SelectStatement(std::string const & table_name, std::vector<std::string> const & column_names)
       : TableTargetedStatement(SELECT, table_name), column_names_(column_names) {}
     
     std::vector<std::string> const & get_column_names() const {
@@ -92,7 +92,7 @@ class SelectStatement : public TableTargetedStatement {
 
 class InsertStatement : public TableTargetedStatement {
   public:
-    InsertStatement(std::string table_name, std::vector<std::string> column_names, std::vector<std::string> values)
+    InsertStatement(std::string const & table_name, std::vector<std::string> const & column_names, std::vector<std::string> const & values)
       : TableTargetedStatement(INSERT, table_name), column_names_(column_names), values_(values) {}
       
     std::vector<std::string> const & get_column_names() const {
