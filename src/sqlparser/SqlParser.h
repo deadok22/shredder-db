@@ -24,9 +24,13 @@ class SqlParser {
 #ifdef TEST_SQLPARSER
 int main() {
   SqlParser parser;
-  delete parser.parse("CREATE TABLE table_name(a INT, b DOUBLE, c VARCHAR(50))");
+  delete parser.parse("CREATE TABLE table_name(a INT, b DOUBLE, c VArCHAR(50))");
+  
   delete parser.parse("SELECT * FROM table_name");
   delete parser.parse("SELECT l, l, a, b, c FROM table_name");
+  
   delete parser.parse("INSERT INTO table_name(a, b, c) VALUES(1, 2, 3)");
+  delete parser.parse("insert into table_name(a, b, c) values(10, 11.2, \"one, two, three =)))\")");
+  delete parser.parse("insert into table_name(a, b, c) values(\"\"\"\", \"\", a cat named \"Fluffy\")");
 }
 #endif
