@@ -24,7 +24,7 @@ class SqlParser {
 #ifdef TEST_SQLPARSER
 int main() {
   SqlParser parser;
-  delete parser.parse("CREATE TABLE table_name(a INT, b DOUBLE, c VARCHAR(50))");
+  delete parser.parse("CREATE TABLE table_name(a INT, b DOUBLE, c VArCHAR(50))");
   
   delete parser.parse("SELECT * FROM table_name");
   delete parser.parse("SELECT l, l, a, b, c FROM table_name");

@@ -218,20 +218,49 @@ std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & colu
     std::string name = match_results["NAME"].str();
     std::string type = match_results["TYPE"].str();
     Utils::info(" [SqlParser] [parseTC] parsed column: " + name + " of type " + type);
-    if ("INT" == type) {
-      columns.push_back(TableColumn(name, DataType::get_int()));
-    } else if ("DOUBLE" == type) {
-      columns.push_back(TableColumn(name, DataType::get_double()));
-    } else if ("VARCHAR" == type) {
-      int size = std::stoi(match_results["SIZE"].str());
-      if (size < 1) {
-        Utils::warning(" [SqlParser] [parseTC] VARCHAR size argument is not positive");
+    switch (type[0]) {
+      //INT
+      case 'i' : {}
+      case 'I' : {
+        columns.push_back(TableColumn(name, DataType::get_int()));
+        break;
       }
-      columns.push_back(TableColumn(name, DataType::get_varchar((size_t) size)));
-    } else {
-      Utils::warning(" [SqlParser] [parseTC] unexpected column type: " + type);
-      return std::vector<TableColumn>();
+      //DOUBLE
+      case 'd' : {}
+      case 'D' : {
+        columns.push_back(TableColumn(name, DataType::get_double()));
+        break;
+      }
+      //VARCHAR
+      case 'v' : {}
+      case 'V' : {
+        int size = std::stoi(match_results["SIZE"].str());
+        if (size < 1) {
+          Utils::warning(" [SqlParser] [parseTC] VARCHAR size argument is not positive");
+        }
+        columns.push_back(TableColumn(name, DataType::get_varchar((size_t) size)));
+        break;
+      }
+      //whatever else
+      default : {
+        Utils::warning(" [SqlParser] [parseTC] unexpected column type: " + type);
+        return std::vector<TableColumn>();
+      }
     }
+//    if ("INT" == type) {
+//      columns.push_back(TableColumn(name, DataType::get_int()));
+//    } else if ("DOUBLE" == type) {
+//      columns.push_back(TableColumn(name, DataType::get_double()));
+//    } else if ("VARCHAR" == type) {
+//      int size = std::stoi(match_results["SIZE"].str());
+//      if (size < 1) {
+//        Utils::warning(" [SqlParser] [parseTC] VARCHAR size argument is not positive");
+//      }
+//      columns.push_back(TableColumn(name, DataType::get_varchar((size_t) size)));
+//    } else {
+//      Utils::warning(" [SqlParser] [parseTC] unexpected column type: " + type);
+//      return std::vector<TableColumn>();
+//    }
     start = match_results[0].second;
   }
   
