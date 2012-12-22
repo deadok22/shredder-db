@@ -247,20 +247,6 @@ std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & colu
         return std::vector<TableColumn>();
       }
     }
-//    if ("INT" == type) {
-//      columns.push_back(TableColumn(name, DataType::get_int()));
-//    } else if ("DOUBLE" == type) {
-//      columns.push_back(TableColumn(name, DataType::get_double()));
-//    } else if ("VARCHAR" == type) {
-//      int size = std::stoi(match_results["SIZE"].str());
-//      if (size < 1) {
-//        Utils::warning(" [SqlParser] [parseTC] VARCHAR size argument is not positive");
-//      }
-//      columns.push_back(TableColumn(name, DataType::get_varchar((size_t) size)));
-//    } else {
-//      Utils::warning(" [SqlParser] [parseTC] unexpected column type: " + type);
-//      return std::vector<TableColumn>();
-//    }
     start = match_results[0].second;
   }
   
