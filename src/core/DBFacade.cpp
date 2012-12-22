@@ -76,7 +76,7 @@ void DBFacade::execute_statement(CreateTableStatement const * stmt) {
 }
 
 void DBFacade::execute_statement(SelectStatement const * stmt) {
-  HeapFileManager &hfm = HeapFileManager::getInstance();
+  HeapFileManager &hfm = HeapFileManager::get_instance();
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
@@ -89,7 +89,7 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
 }
 
 void DBFacade::execute_statement(InsertStatement const * stmt) {
-  HeapFileManager &hfm = HeapFileManager::getInstance();
+  HeapFileManager &hfm = HeapFileManager::get_instance();
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
@@ -97,7 +97,7 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
     return;
   }
 
-  hfm.processInsertRecord(*metadata, stmt->get_column_names(), stmt->get_values());
+  hfm.process_insert_record(*metadata, stmt->get_column_names(), stmt->get_values());
   cout << "Insert OK" << std::endl;
   delete metadata;
 }

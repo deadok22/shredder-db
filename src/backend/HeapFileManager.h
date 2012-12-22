@@ -7,15 +7,22 @@
 
 class HeapFileManager {
 public:
-  bool processInsertRecord(
+  bool process_insert_record(
     TableMetaData const & table,
     std::vector<std::string> const & column_names,
     std::vector<std::string> const & column_values);
 
-  bool processDeleteRecord(/* TODO */);
+  bool process_delete_record(/* TODO */);
   void print_all_records(TableMetaData const & table);
 
-  static HeapFileManager & getInstance();
+  //returns a pointer to data related to a given record. If there is no such recprd returns NULL
+  void * get_record(unsigned page_id, unsigned slot_id);
+
+  int get_int_attr();
+  double get_double_attr();
+  std::string get_vchar_attr();
+
+  static HeapFileManager & get_instance();
 
 private:
   static HeapFileManager * instance_;

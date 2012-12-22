@@ -9,11 +9,11 @@
 
 HeapFileManager * HeapFileManager::instance_ = new HeapFileManager();
 
-HeapFileManager & HeapFileManager::getInstance() {
+HeapFileManager & HeapFileManager::get_instance() {
   return *HeapFileManager::instance_;
 }
 
-bool HeapFileManager::processInsertRecord(
+bool HeapFileManager::process_insert_record(
   TableMetaData const & table,
   std::vector<std::string> const & column_names,
   std::vector<std::string> const & column_values) {
@@ -91,7 +91,7 @@ int HeapFileManager::take_free_slot(char * page_data) {
   }
 }
 
-bool HeapFileManager::processDeleteRecord(/* TODO */) { return false;}
+bool HeapFileManager::process_delete_record(/* TODO */) { return false;}
 
 void HeapFileManager::print_record(TableMetaData const & table, char * page_data) {
   int offset = 0;
@@ -121,6 +121,22 @@ void HeapFileManager::print_record(TableMetaData const & table, char * page_data
     offset += attr_size;
   }
   std::cout << std::endl;
+}
+
+void * HeapFileManager::get_record(unsigned page_id, unsigned slot_id) {
+  return NULL;
+}
+
+int HeapFileManager::get_int_attr() {
+  return 0;
+}
+
+double HeapFileManager::get_double_attr() {
+  return 0.0;
+}
+
+std::string HeapFileManager::get_vchar_attr() {
+  return "";
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
