@@ -17,7 +17,7 @@ static const boost::regex INSERT_START_REGEX(INSERT_START_REGEX_TEXT, boost::reg
 /*
  * Utility constants
  */
-static const std::string CSV_REGEX_TEXT = "(?:(?:\\s*\\w+\\s*,)*\\s*\\w+)";
+static const std::string CSV_REGEX_TEXT = "(?:(?:\\s*(?:\"(?:(?:\"\")|[^\"])*\")|(?:[^\\),][^,]*)\\s*,\\s*))*(?:(?:\\s*(?:\"(?:(?:\"\")|[^\"])*\")|(?:[^\\),][^,]*)))";
 static const std::string COLUMN_NAME_AND_TYPE_REGEX_TEXT
       = "(?:\\s*(?'NAME'\\w+)\\s+(?:(?'TYPE'INT)|(?'TYPE'DOUBLE)|(?:(?'TYPE'VARCHAR)\\s*\\((?'SIZE'\\d+)\\)))\\s*)";
 static const std::string NAMES_AND_TYPES_REGEX_TEXT
@@ -130,7 +130,7 @@ SqlStatement const * SqlParser::parse_insert_statement(std::string const & state
   
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, INSERT_REGEX)) {
-    Utils::info(" [SqlParser] invalid INSERT statement syntax");
+    Utils::warning(" [SqlParser] invalid INSERT statement syntax");
     return new UnknownStatement();
   }
   
@@ -139,7 +139,7 @@ SqlStatement const * SqlParser::parse_insert_statement(std::string const & state
   std::vector<std::string> values = parse_comma_separated_values(match_results["VALUES"].str());
   
   if (column_names.size() != values.size()) {
-    Utils::info(" [SqlParser] invalidINSERT statement syntax: columns count is not equal to values count");
+    Utils::warning(" [SqlParser] invalid INSERT statement syntax: columns count is not equal to values count");
     return new UnknownStatement();
   }
   
@@ -155,7 +155,7 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
   
   boost::smatch match_results;
   if (!boost::regex_match(statement_text, match_results, SELECT_REGEX)) {
-    Utils::info(" [SqlParser] invalid SELECT statement syntax");
+    Utils::warning(" [SqlParser] invalid SELECT statement syntax");
     return new UnknownStatement();
   }
   
@@ -173,7 +173,8 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
 
 std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {
   static const std::string COMMA_SEPARATED_VALUE_REGEX_TEXT
-        = "^\\s*(?:(?:(?'VALUE'\\w+)\\s*,)|(?'VALUE'\\w+))\\s*";
+        = "^\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,]*))\\s*(?:$|,)";
+        //"^\\s*(?:(?:(?:\"(?'VALUE'(?:\"\"|))\"|(?'VALUE' NO QUOTES))\\s*,)|(?'VALUE' LAST VALUE))\\s*";
   static const boost::regex COMMA_SEPARATED_VALUE_REGEX(COMMA_SEPARATED_VALUE_REGEX_TEXT, boost::regex_constants::icase);
   
   Utils::info(" [SqlParser] [parseCSV] parsing comma separated values");
@@ -182,7 +183,7 @@ std::vector<std::string> SqlParser::parse_comma_separated_values(std::string con
   std::string::const_iterator end = values_string.end();
   std::vector<std::string> values;
   boost::smatch match_results;
-  while (boost::regex_search(start, end, match_results, COMMA_SEPARATED_VALUE_REGEX)) {
+  while (start != end && boost::regex_search(start, end, match_results, COMMA_SEPARATED_VALUE_REGEX)) {
     Utils::info(" [SqlParser] [parseCSV] parsed value: " + match_results["VALUE"].str());
     values.push_back(match_results["VALUE"].str());
     start = match_results[0].second;
