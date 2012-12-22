@@ -88,8 +88,8 @@ class CreateIndexStatement : public TableTargetedStatement {
         TableTargetedStatement(CREATE_INDEX, table_name),
         index_name_(index_name),
         columns_(columns),
-        is_btree_(is_btree),
-        is_unique_(is_unique) {}
+        is_unique_(is_unique),
+        is_btree_(is_btree) {}
     
     std::string const & get_index_name() const {
       return index_name_;
