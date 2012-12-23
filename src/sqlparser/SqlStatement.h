@@ -117,7 +117,7 @@ class CreateIndexStatement : public TableTargetedStatement {
 
 class WhereClause {
 public:
-  enum PredicateType {EQ, NEQ, LT, LTOE, GT, GTOE};
+  enum PredicateType {EQ, NEQ, LT, LTOE, GT, GTOE, UNKNOWN};
   struct Predicate {
     WhereClause::PredicateType type;
     std::string column;
@@ -128,7 +128,7 @@ public:
 public:
   WhereClause() {}
   
-  WhereClause(std::vector<WhereClause::Predicate> predicates) : predicates_(predicates) {}
+  WhereClause(std::vector<WhereClause::Predicate> const & predicates) : predicates_(predicates) {}
   
   bool is_empty() const {
     return predicates_.empty();
@@ -145,7 +145,7 @@ private:
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {
   public:
-    SelectStatement(std::string const & table_name, std::vector<std::string> const & column_names, WhereClause where = WhereClause()):
+    SelectStatement(std::string const & table_name, std::vector<std::string> const & column_names, WhereClause const & where = WhereClause()):
       TableTargetedStatement(SELECT, table_name),
       column_names_(column_names),
       where_clause_(where) {}
