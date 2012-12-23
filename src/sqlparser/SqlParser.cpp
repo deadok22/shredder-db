@@ -29,6 +29,13 @@ static const std::string NAMES_AND_TYPES_REGEX_TEXT
         + "\\s*,)*\\s*"
         + COLUMN_NAME_AND_TYPE_REGEX_TEXT
         +")";
+static const std::string PREDICATE_REGEX_TEXT = "\\s*(?'COLUMN'\\w+)\\s*(?'PREDICATE'(?:<=?)|(?:>=?)|=|(?:!=))\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,\\s]+))";
+static const std::string WHERE_CLAUSE_REGEX_TEXT
+      = "WHERE\\s+(?'WHERE'"
+        + PREDICATE_REGEX_TEXT
+        + "(?:\\s+AND\\s+"
+        + PREDICATE_REGEX_TEXT
+        + "\\s*)*)";
 
 SqlStatement const * SqlParser::parse(std::string const & statement_text) const {
 #ifdef SQLPARSE_DBG
@@ -195,7 +202,11 @@ SqlStatement const * SqlParser::parse_insert_statement(std::string const & state
 
 SqlStatement const * SqlParser::parse_select_statement(std::string const & statement_text) const {
   static const std::string SELECT_REGEX_TEXT
-        = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|" + CSV_REGEX_TEXT + "))\\s+FROM\\s+(?'TABLE'\\w+)\\s*$";
+        = "^\\s*SELECT\\s+(?'WHAT'(?:\\*|"
+          + CSV_REGEX_TEXT
+          + "))\\s+FROM\\s+(?'TABLE'\\w+)(?:\\s+"
+          + WHERE_CLAUSE_REGEX_TEXT
+          + ")?\\s*$";
   static const boost::regex SELECT_REGEX(SELECT_REGEX_TEXT, boost::regex_constants::icase);
 #ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] parsing SELECT statement");
@@ -208,14 +219,20 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
   
   boost::ssub_match what_match = match_results["WHAT"];
   boost::ssub_match table_match = match_results["TABLE"];
-#ifdef SQLPARSE_DBG
-  Utils::info("[SqlParser] parsed: SELECT <WHAT: " + what_match.str() + "> FROM <TABLE:" + table_match.str() + ">");
-#endif
-  if ("*" == what_match.str()) {
-    return new SelectStatement(table_match.str(), std::vector<std::string>());
+  WhereClause where_clause;
+  if ("" != match_results["WHERE"].str()) {
+    where_clause = parse_where_clause(match_results["WHERE"].str());
+    if (where_clause.is_empty()) {
+      Utils::warning("[SqlParser] invalid SELECT statement syntax: bad WHERE clause");
+      return new UnknownStatement();
+    }
   }
   
-  return new SelectStatement(table_match.str(), parse_comma_separated_values(what_match.str()));
+  if ("*" == what_match.str()) {
+    return new SelectStatement(table_match.str(), std::vector<std::string>(), where_clause);
+  }
+  
+  return new SelectStatement(table_match.str(), parse_comma_separated_values(what_match.str()), where_clause);
 }
 
 std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {
@@ -234,8 +251,6 @@ std::vector<std::string> SqlParser::parse_comma_separated_values(std::string con
     values.push_back(match_results["VALUE"].str());
     start = match_results[0].second;
   }
-  
-    //TODO check that whole string is parsed.
   
   if (0 == values.size()) {
     Utils::warning("[SqlParser] [parseCSV] no values parsed");
@@ -260,7 +275,6 @@ std::vector<CreateIndexStatement::Column> SqlParser::parse_create_index_columns(
   boost::smatch match_results;
   while(boost::regex_search(start, end, match_results, COLUMN_REGEX)) {
     std::string name = match_results["NAME"].str();
-    //TODO make sure it works if no ASC or DESC specified
     std::string order = match_results["ORDER"].str();
     bool is_descending = 0 != order.size() && ('d' == order[0] || 'D' == order[0]);
     
@@ -270,8 +284,6 @@ std::vector<CreateIndexStatement::Column> SqlParser::parse_create_index_columns(
     
     start = match_results[0].second;
   }
-  
-  //TODO check that whole string is parsed.
   
   if (0 == columns.size()) {
     Utils::warning("[SqlParser] [parseIC] no columns parsed");
@@ -336,11 +348,60 @@ std::vector<TableColumn> SqlParser::parse_table_columns(std::string const & colu
     start = match_results[0].second;
   }
   
-  //TODO check that whole string is parsed.
-  
   if (0 == columns.size()) {
     Utils::warning("[SqlParser] [parseTC] no columns parsed");
   }
   
   return columns;
+}
+
+WhereClause::PredicateType get_predicate_type(std::string const & predicate_text) {
+  if ("=" == predicate_text) {
+    return WhereClause::PredicateType::EQ;
+  } else if ("!=" == predicate_text) {
+    return WhereClause::PredicateType::NEQ;
+  } else if ("<=" == predicate_text) {
+    return WhereClause::PredicateType::LTOE;
+  } else if (">=" == predicate_text) {
+    return WhereClause::PredicateType::GTOE;
+  } else if ("<" == predicate_text) {
+    return WhereClause::PredicateType::LT;
+  } else if (">" == predicate_text) {
+    return WhereClause::PredicateType::GT;
+  }
+  return WhereClause::PredicateType::UNKNOWN;
+}
+
+WhereClause SqlParser::parse_where_clause(std::string const & predicates_string) const {
+  static const std::string ONE_PREDICATE_REGEX_TEXT
+        = "^" + PREDICATE_REGEX_TEXT + "(?:(?:\\s+AND\\s+)|(?:\\s*$))";
+  static const boost::regex PREDICATE_REGEX(ONE_PREDICATE_REGEX_TEXT, boost::regex_constants::icase);
+  
+  Utils::info("[SqlParser] [parseWC] parsing WHERE clause");
+  
+  std::vector<WhereClause::Predicate> predicates;
+  std::string::const_iterator start = predicates_string.begin();
+  std::string::const_iterator end = predicates_string.end();
+  boost::smatch match_results;
+  while (boost::regex_search(start, end, match_results, PREDICATE_REGEX)) {
+    std::string column = match_results["COLUMN"].str();
+    std::string value = match_results["VALUE"].str();
+    WhereClause::PredicateType pred_type = get_predicate_type(match_results["PREDICATE"].str());
+    if (pred_type == WhereClause::PredicateType::UNKNOWN) {
+      Utils::warning("[SqlParser] [parseWC] unknown predicate type");
+      return WhereClause();
+    }
+    
+    Utils::info("[SqlParser] [parseWC] parsed predicate " + match_results["PREDICATE"].str() + " on column " + column + " and value " + value);
+    
+    predicates.push_back(WhereClause::Predicate(pred_type, column, value));
+    start = match_results[0].second;
+  }
+  
+  if (predicates.empty()) {
+    Utils::warning("[SqlParser] [parseWC] no predicates parsed");
+    return WhereClause();
+  }
+  
+  return WhereClause(predicates);
 }

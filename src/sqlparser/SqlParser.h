@@ -20,6 +20,7 @@ class SqlParser {
     std::vector<std::string> parse_comma_separated_values(std::string const & values_string) const;
     std::vector<TableColumn> parse_table_columns(std::string const & columns_string) const;
     std::vector<CreateIndexStatement::Column> parse_create_index_columns(std::string const & columns_string) const;
+    WhereClause parse_where_clause(std::string const & predicates_string) const;
 };
 
 //TEST_CODE
@@ -30,6 +31,8 @@ int main() {
   
   delete parser.parse("SELECT * FROM table_name");
   delete parser.parse("SELECT l, l, a, b, c FROM table_name");
+  delete parser.parse("select a, b, c from table_name where a < 10 and b < 146");
+  delete parser.parse("select a, b, c from table_name where a = 10 and b != 146");
   
   delete parser.parse("INSERT INTO table_name(a, b, c) VALUES(1, 2, 3)");
   delete parser.parse("insert into table_name(a, b, c) values(10, 11.2, \"one, two, three =)))\")");
