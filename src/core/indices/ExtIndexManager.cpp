@@ -9,7 +9,9 @@
 
 std::string const ExtIndexManager::DIR_SUFFIX("_directory");
 unsigned const ExtIndexManager::INIT_BUCKET_DEPTH = 3;
-size_t const ExtIndexManager::DIR_REC_SIZE_IN_INT = 1;
+
+size_t const ExtIndexManager::DIR_PAGE_AUX_DATA_SIZE = sizeof(int);
+size_t const ExtIndexManager::DIR_REC_SIZE = sizeof(int);
 
 //One int int for depth, another is for number items in bucket
 size_t const ExtIndexManager::PAGE_AUX_DATA_SIZE = 2 * sizeof(int);
@@ -114,9 +116,13 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   HashOperationParams params;
   params.value_size = compute_key_size(*t_metadata, ind_metadata);
   params.value = new char[params.value_size];
+#ifdef EIM_DBG
+  Utils::info("[EIM][Create index] Key size was determined to be " + std::to_string(params.value_size));
+  Utils::info("[EIM][Create index] Insert values into index... ");
+#endif
 
   HeapFileManager::RecordsIterator rec_itr(*t_metadata);
-  ExtIndexManager mock_manager(path);
+  ExtIndexManager mock_manager(index_file_name);
   while (rec_itr.next()) {
     params.page_id = rec_itr.rec_page_id();
     params.slot_id = rec_itr.rec_slot_id();
@@ -133,6 +139,9 @@ size_t ExtIndexManager::compute_key_size(TableMetaData const & t_meta, TableMeta
     for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
       if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
         key_size += t_meta.attribute(attr_i).size();
+#ifdef EIM_DBG
+        Utils::info("  [EIM][Determine key size] Key attr " + t_meta.attribute(attr_i).name() + " has size " + std::to_string(t_meta.attribute(attr_i).size()));
+#endif
         break;
       }
     }
@@ -186,7 +195,13 @@ int ExtIndexManager::look_up_value(HashOperationParams * params) {
 
 bool ExtIndexManager::insert_value(HashOperationParams const & params) {
   unsigned bucket_id = get_bucket_id(compute_hash(params));
+#ifdef EIM_DBG
+  Utils::info("[EIM][Insert value] Insert record with heap id " + std::to_string(params.page_id) +
+    ":" + std::to_string(params.slot_id) + " into bucket with id " + std::to_string(bucket_id));
+#endif
+
   Page &page = BufferManager::get_instance().get_page(bucket_id, index_path_);
+  //TODO lookfor duplicates?
 
   if (!bucket_has_free_slot(page, params.value_size + RECORD_ID_SIZE)) {
     page.unpin();
@@ -249,16 +264,22 @@ bool ExtIndexManager::bucket_has_free_slot(Page & page, unsigned record_size) {
 unsigned ExtIndexManager::get_bucket_id(unsigned hash) {  
   std::string directory_file_name = index_path_ + ExtIndexManager::DIR_SUFFIX;
   BufferManager &bm = BufferManager::get_instance();
-  Page &fst_dir_page = bm.get_page(0, index_path_);
+  Page &fst_dir_page = bm.get_page(0, directory_file_name);
 
-  unsigned mask = (1 << *((int *)fst_dir_page.get_data() + 1)) - 1;
-  //0th page is for metadata
-  unsigned ptr_number = (hash & mask) + 1;
+  unsigned mask = (1 << *((int *)fst_dir_page.get_data())) - 1;
+  unsigned ptr_number = hash & mask;
 
   //One int is for ptr on page count
-  unsigned ptrs_per_page = (Page::PAGE_SIZE - sizeof(int)) / (DIR_REC_SIZE_IN_INT * sizeof(int));
-  unsigned ptr_page = ptr_number / ptrs_per_page;
-  unsigned ptr_offset = ptr_number % ptrs_per_page + 1;
+  unsigned ptrs_per_page = (Page::PAGE_SIZE - DIR_PAGE_AUX_DATA_SIZE) / DIR_REC_SIZE;
+  //0th page is for metadata
+  unsigned ptr_page = ptr_number / ptrs_per_page + 1;
+  unsigned ptr_offset = ptr_number % ptrs_per_page + DIR_PAGE_AUX_DATA_SIZE / sizeof(int);
+
+#ifdef EIM_DBG
+  Utils::info("  [EIM][Calc bucket id] Hash value: " + std::to_string(hash) + "; maks: " + std::to_string(mask) +
+    "; pointer number: " + std::to_string(ptr_number));
+  Utils::info("  [EIM][Calc bucket id] Ptr page: " + std::to_string(ptr_page) + "; ptr offset: " + std::to_string(ptr_offset));
+#endif
 
   Page &req_page = BufferManager::get_instance().get_page(ptr_page, directory_file_name);
   return *((unsigned *)req_page.get_data() + ptr_offset);
@@ -287,7 +308,7 @@ unsigned ExtIndexManager::compute_hash(HashOperationParams const & params) {
   }
 
   for (unsigned i = 0; i < params.value_size % sizeof(int); ++i) {
-    base ^= *((char *)(data + full_ints * sizeof(int) + i));
+    base ^= *(data + full_ints * sizeof(int) + i);
   }
 #ifdef EIM_DBG
   Utils::info("[EIM] Computed hash code is " + std::to_string(base));

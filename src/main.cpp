@@ -113,7 +113,7 @@ int main(int argc, char ** argv) {
     Utils::warning("[Common] Max buffer page size is 0.");
   }
 
-  std::string current_root_path = InfoPool::get_instance().get_db_info().root_path;
+  std::string &current_root_path = InfoPool::get_instance().get_db_info().root_path;
 #ifdef MAIN_DBG
   Utils::info("[Common] DB root path is " + current_root_path);
 #endif

@@ -57,6 +57,7 @@ bool HeapFileManager::process_insert_record(
         break;
       case VARCHAR:
         std::string value_to_store = name_to_value.count(attr_name) == 0 ? std::string(attr_size, '\0') : name_to_value[attr_name];
+        memset(page_data + offset, '\0', attr_size); //must mem set since value is used in hash counting
         memcpy(page_data + offset, value_to_store.c_str(), attr_size);
         *(page_data + offset + attr_size) = '\0';
         break;

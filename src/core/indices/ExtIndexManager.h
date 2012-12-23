@@ -68,7 +68,9 @@ private: //classes
 private: //vars and consts
   static std::string const DIR_SUFFIX;
   static unsigned const INIT_BUCKET_DEPTH;
-  static size_t const DIR_REC_SIZE_IN_INT;
+  static size_t const DIR_PAGE_AUX_DATA_SIZE;
+  static size_t const DIR_REC_SIZE;
+
   static size_t const PAGE_AUX_DATA_SIZE;
   static size_t const RECORD_ID_SIZE;
 
