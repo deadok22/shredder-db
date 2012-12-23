@@ -73,7 +73,6 @@ class CreateTableStatement : public TableTargetedStatement {
 class CreateIndexStatement : public TableTargetedStatement {
   public:
     struct Column {
-      public:
         std::string name;
         bool is_descending;
         Column(std::string const & column_name, bool is_desc = false)
@@ -116,25 +115,62 @@ class CreateIndexStatement : public TableTargetedStatement {
     bool is_btree_;
 };
 
-//TODO add select from join statement
+class WhereClause {
+public:
+  enum PredicateType {EQ, NEQ, LT, LTOE, GT, GTOE};
+  struct Predicate {
+    WhereClause::PredicateType type;
+    std::string column;
+    std::string value;
+    Predicate(WhereClause::PredicateType pt, std::string const & col, std::string const & val) :
+      type(pt), column(col), value(val) {}
+  };
+public:
+  WhereClause() {}
+  
+  WhereClause(std::vector<WhereClause::Predicate> predicates) : predicates_(predicates) {}
+  
+  bool is_empty() const {
+    return predicates_.empty();
+  }
+  
+  std::vector<WhereClause::Predicate> const & get_predicates() const {
+    return predicates_;
+  }
+  
+private:
+  std::vector<WhereClause::Predicate> predicates_;
+};
+
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {
   public:
-    SelectStatement(std::string const & table_name, std::vector<std::string> const & column_names)
-      : TableTargetedStatement(SELECT, table_name), column_names_(column_names) {}
+    SelectStatement(std::string const & table_name, std::vector<std::string> const & column_names, WhereClause where = WhereClause()):
+      TableTargetedStatement(SELECT, table_name),
+      column_names_(column_names),
+      where_clause_(where) {}
     
     std::vector<std::string> const & get_column_names() const {
       return column_names_;
+    }
+    
+    WhereClause const & get_where_clause() const {
+      return where_clause_;
     }
     
     bool is_select_asterisk() const {
       return column_names_.empty();
     }
     
+    bool has_where_clause() const {
+      return where_clause_.is_empty();
+    }
+    
     virtual ~SelectStatement() {}
     
   private:
     std::vector<std::string> column_names_;
+    WhereClause where_clause_;
 };
 
 class InsertStatement : public TableTargetedStatement {
