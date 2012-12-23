@@ -137,7 +137,6 @@ void * HeapFileManager::get_record(TableMetaData const & table, unsigned page_id
   return data;
 }
 
-
 char * HeapFileManager::get_attr_value(void * data, TableMetaData const & table, std::string const & attr_name) {
   unsigned offset = 0;
   for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
@@ -168,27 +167,54 @@ std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & t
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
-  PagesDirectory pd(get_heap_file_name(table.name()));
-  PagesDirectory::NotEmptyPagesIterator itr = pd.get_iterator();
+  //TODO fix filter
+  Filter filter;
+  RecordsIterator records_itr(table, filter);
+  while (records_itr.next()) {
+    print_record(table, (char *)records_itr.rec_data());
+  }
+}
 
-  while (itr.next()) {
-    char * data = itr->get_data();
-    
-    unsigned records = table.records_per_page();
-    char * records_data = data + table.space_for_bit_mask();
+//-----------------------------------------------------------------------------
+// Records iterator
 
-    while (records > 0) {
-      unsigned mask_offset = 0;
-      while (mask_offset < 8) {
-        if (((1 << (7 - mask_offset)) & (*data)) > 1) {
-          print_record(table, records_data);
-        }
-        if (--records == 0) { break; }
-        ++mask_offset;
-        records_data += table.record_size();
+HeapFileManager::RecordsIterator::RecordsIterator(TableMetaData const & table, Filter const & filter):
+  t_meta_(table), filter_(filter), records_data_(NULL), page_data_(NULL), current_slot_id_(0),
+  pd(PagesDirectory(get_heap_file_name(table.name()))), page_itr_(pd.get_iterator()) { }
+
+bool HeapFileManager::RecordsIterator::switch_page() {
+  if (!page_itr_.next()) { return false; }
+  
+  page_data_ = page_itr_->get_data();
+  records_data_ = page_data_ + t_meta_.space_for_bit_mask();
+  current_slot_id_ = 0;
+  return true;
+}
+
+bool HeapFileManager::RecordsIterator::next() {
+  if (current_slot_id_ == t_meta_.records_per_page() && page_data_ == NULL) {
+    return false;
+  }
+
+  while (true) {
+    ++current_slot_id_;
+    records_data_ += t_meta_.record_size();
+    if (current_slot_id_ == t_meta_.records_per_page()) { page_data_ = NULL; }
+    if (page_data_ == NULL && !switch_page()) {
+      return false;
+    }
+
+    unsigned bm_byte = current_slot_id_ / 8;
+    unsigned bm_bit = 1 << (7 - current_slot_id_ % 8);
+    if ((*(page_data_ + bm_byte) & bm_bit) > 0) {
+      if (filter_.isOk(t_meta_, (void *)records_data_)) {
+        return true;
       }
-      data += 1;
     }
   }
 
 }
+
+unsigned HeapFileManager::RecordsIterator::rec_page_id() { return page_itr_->get_pid(); }
+unsigned HeapFileManager::RecordsIterator::rec_slot_id() { return current_slot_id_; }
+void * HeapFileManager::RecordsIterator::rec_data() { return records_data_; }

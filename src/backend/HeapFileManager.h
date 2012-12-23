@@ -5,7 +5,35 @@
 #include "Page.h"
 #include "../core/MetaDataProvider.h"
 
+class Filter { //mock filter, don't forget copy ctr
+public:
+  bool isOk(TableMetaData const & table, void * data) const { return true; }
+};
+
 class HeapFileManager {
+public://class
+  class RecordsIterator {
+  public:
+    RecordsIterator(TableMetaData const & table, Filter const & filter);
+    bool next();
+    unsigned rec_page_id();
+    unsigned rec_slot_id();
+    void * rec_data();
+  private:
+    bool switch_page();
+    TableMetaData const & t_meta_;
+    Filter const & filter_;
+
+    char * records_data_;
+    char * page_data_;
+    int current_slot_id_;
+
+    PagesDirectory pd;
+    PagesDirectory::NotEmptyPagesIterator page_itr_;
+
+  };
+
+
 public:
   bool process_insert_record(
     TableMetaData const & table,
@@ -32,7 +60,7 @@ private:
   int take_free_slot(char * page_data);
   char * get_attr_value(void * data, TableMetaData const & table, std::string const & attr_name);
 
-  std::string get_heap_file_name(std::string const & table_name);
+  static std::string get_heap_file_name(std::string const & table_name);
 };
 
 #ifdef TEST_HFM

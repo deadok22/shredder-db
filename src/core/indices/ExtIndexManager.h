@@ -9,7 +9,7 @@ struct HashOperationParams {
   //<rid> (x2 ints) + indexed data
   void * value;
   unsigned page_id;
-  unsigned slot_id;
+  int slot_id;
   size_t value_size;
 };
 
@@ -67,6 +67,8 @@ private: //vars and consts
   static std::string const DIR_SUFFIX;
   static unsigned const INIT_BUCKET_DEPTH;
   static size_t const DIR_REC_SIZE_IN_INT;
+  static size_t const PAGE_AUX_DATA_SIZE;
+  static size_t const RECORD_ID_SIZE;
 
   std::string index_path_;
 
