@@ -39,7 +39,7 @@ bool MetaDataProvider::add_index_info(std::string const & table_name, TableMetaD
 
   for (int i = 0; i < ind_metadata.keys_size(); ++i) {
     if (existed_columns.count(ind_metadata.keys(i).name()) == 0) {
-      std::cout << "[ERROR] There is no column " << ind_metadata.keys(i).name() << " in table with name " << table_name << std::endl;
+      std::cout << "[ERROR] There is no column " << ind_metadata.keys(i).name() << "  in table with name " << table_name << std::endl;
       return false;
     }
   }

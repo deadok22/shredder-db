@@ -2,9 +2,10 @@
 # MAIN_DBG is for mostly for repl 
 # DBFACADE_DBG for DbFacade logic
 # SQLPARSE_DBG - for sql parsing subsystem
+# EIM_DBG - is for Extendable index implementation
 
-#D_KEY = -DDEBUG -DMAIN_DBG -DDBFACADE_DBG -DSQLPARSE_DBG
-D_KEY = -DDEBUG -DDBFACADE_DBG
+#D_KEY = -DDEBUG -DMAIN_DBG -DDBFACADE_DBG -DSQLPARSE_DBG -DEIM_DBG
+D_KEY = -DDEBUG -DDBFACADE_DBG -DEIM_DBG -DMAIN_DBG
 COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
@@ -34,7 +35,7 @@ build_sqlparser: init
 build_core: init build_common build_proto
 	g++ src/core/MetaDataProvider.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/MetaDataProvider.o
 	g++ src/core/DBFacade.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/DBFacade.o
-#	g++ src/core/indices/ExtIndexManager.cpp $(COPTS) -c -o build/ExtIndexManager.o
+	g++ src/core/indices/ExtIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/ExtIndexManager.o
 
 build_backend: init build_common
 	g++ src/backend/DiskManager.cpp $(COPTS) -c -o build/DiskManager.o

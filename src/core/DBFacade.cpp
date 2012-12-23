@@ -7,6 +7,7 @@
 #include "../common/InfoPool.h" 
 #include "../backend/PagesDirectory.h"
 #include "../backend/HeapFileManager.h"
+#include "indices/ExtIndexManager.h"
 
 DBFacade * DBFacade::instance_ = new DBFacade();
 
@@ -52,12 +53,22 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
 
   for (unsigned i = 0; i < stmt->get_columns().size(); ++i) {
     CreateIndexStatement::Column column = stmt->get_columns()[i];
-    TableMetaData_IndexMetadata_KeyInfo *attr = index_metadata.add_keys();
-    attr->set_name(column.name);
-    attr->set_asc(!column.is_descending);
+    TableMetaData_IndexMetadata_KeyInfo *key = index_metadata.add_keys();
+    key->set_name(column.name);
+    key->set_asc(!column.is_descending);
   }
 
-  Utils::warning("[DBFacade] Actual index creation is not impelemnted");
+  //TODO fix magic number
+  if (index_metadata.type() == 0) {
+#ifdef DBFACADE_DBG
+    Utils::info("[DBFacade] Creating Hash index with Extendable Hash table implementation");  
+#endif
+    std::string table_folder = InfoPool::get_instance().get_db_info().root_path + stmt->get_table_name();
+    ExtIndexManager::create_index(table_folder, index_metadata);
+  } else {
+    //todo inmplement BTREE
+    Utils::warning("[DBFacade] Btree index creation is not impelemnted");  
+  }
 
 #ifdef DBFACADE_DBG
   Utils::info("[DBFacade] Saving index metadata");
