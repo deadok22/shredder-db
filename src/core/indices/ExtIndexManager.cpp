@@ -1,6 +1,9 @@
 #include "ExtIndexManager.h"
 #include "../../backend/BufferManager.h"
 #include "../../common/Utils.h"
+#include "TableMetadata.pb.h"
+#include "../MetaDataProvider.h"
+#include "../../backend/HeapFileManager.h"
 
 #include <fstream>
 
@@ -78,7 +81,9 @@ int * ExtIndexManager::BucketPointersIterator::operator->() {
 
 ExtIndexManager::ExtIndexManager(std::string const & index_path): index_path_(index_path) {}
 
-void ExtIndexManager::create_index(std::string const & path, TableMetaData_IndexMetadata const & ind_metadata) {
+void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
+  std::string path = InfoPool::get_instance().get_db_info().root_path + table_name;
+
   std::string attrs = ind_metadata.name() + "_";
   for (int i = 0; i < ind_metadata.keys_size(); ++i) {
     attrs += "_" + ind_metadata.keys(i).name();
@@ -101,13 +106,53 @@ void ExtIndexManager::create_index(std::string const & path, TableMetaData_Index
 
   BucketPointersIterator bpi(directory_file_name, true);
   while (bpi.next()) { *bpi = bpi.get_current_hash(); }
-
   init_buckets(index_file_name, 0, 1 << INIT_BUCKET_DEPTH, INIT_BUCKET_DEPTH);
 
   //insert records
-  Utils::warning("[ExtIndexManager] Filling with records is not implemented");
+  TableMetaData * t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
+
+  HashOperationParams params;
+  params.value_size = compute_key_size(*t_metadata, ind_metadata);
+  params.value = new char[params.value_size];
+
+  HeapFileManager::RecordsIterator rec_itr(*t_metadata);
+  ExtIndexManager mock_manager(path);
+  while (rec_itr.next()) {
+    params.page_id = rec_itr.rec_page_id();
+    params.slot_id = rec_itr.rec_slot_id();
+    init_params_with_record(*t_metadata, ind_metadata, rec_itr.rec_data(), &params);
+    mock_manager.insert_value(params);
+  }
+  delete [] (char *)params.value;
+  delete t_metadata;
 }
 
+size_t ExtIndexManager::compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta) {
+  size_t key_size = 0;
+  for (int i = 0; i < i_meta.keys_size(); ++i) {
+    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
+      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
+        key_size += t_meta.attribute(attr_i).size();
+        break;
+      }
+    }
+  }
+  return key_size;
+}
+
+void ExtIndexManager::init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, HashOperationParams * params) {
+  size_t rec_offset = 0;
+  size_t key_offset = 0;
+  for (int i = 0; i < i_meta.keys_size(); ++i) {
+    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
+      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
+        memcpy((char *)params->value + key_offset, (char *)rec_data + rec_offset, t_meta.attribute(attr_i).size());
+        key_offset += t_meta.attribute(attr_i).size();
+      }
+      rec_offset += t_meta.attribute(attr_i).size();
+    }
+  }
+}
 
 int ExtIndexManager::look_up_value(HashOperationParams * params) {
   unsigned bucket_id = get_bucket_id(compute_hash(*params));
@@ -139,11 +184,11 @@ int ExtIndexManager::look_up_value(HashOperationParams * params) {
   return bucket_record_index == occupied ? -1 : bucket_record_index;
 }
 
-bool ExtIndexManager::insert_value(HashOperationParams * params) {
-  unsigned bucket_id = get_bucket_id(compute_hash(*params));
+bool ExtIndexManager::insert_value(HashOperationParams const & params) {
+  unsigned bucket_id = get_bucket_id(compute_hash(params));
   Page &page = BufferManager::get_instance().get_page(bucket_id, index_path_);
 
-  if (!bucket_has_free_slot(page, params->value_size + RECORD_ID_SIZE)) {
+  if (!bucket_has_free_slot(page, params.value_size + RECORD_ID_SIZE)) {
     page.unpin();
     Utils::error("[ExtInd] Bucket extension not implemented yet. Ignore for now");
     return false;
@@ -154,11 +199,11 @@ bool ExtIndexManager::insert_value(HashOperationParams * params) {
   //skip depth and occupied
   unsigned &occupied = *((unsigned *)page.get_data(false) + 1);
   char * data = page.get_data(false) + PAGE_AUX_DATA_SIZE +
-    occupied * (RECORD_ID_SIZE + params->value_size);
+    occupied * (RECORD_ID_SIZE + params.value_size);
 
-  *((int *)data) = params->page_id;
-  *((int *)data + 1) = params->slot_id;
-  memcpy(data + 2*sizeof(int), (char *)params->value, params->value_size);
+  *((int *)data) = params.page_id;
+  *((int *)data + 1) = params.slot_id;
+  memcpy(data + 2*sizeof(int), (char *)params.value, params.value_size);
 
   ++occupied;
   page.unpin();

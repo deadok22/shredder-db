@@ -63,8 +63,7 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
 #ifdef DBFACADE_DBG
     Utils::info("[DBFacade] Creating Hash index with Extendable Hash table implementation");  
 #endif
-    std::string table_folder = InfoPool::get_instance().get_db_info().root_path + stmt->get_table_name();
-    ExtIndexManager::create_index(table_folder, index_metadata);
+    ExtIndexManager::create_index(stmt->get_table_name(), index_metadata);
   } else {
     //todo inmplement BTREE
     Utils::warning("[DBFacade] Btree index creation is not impelemnted");  

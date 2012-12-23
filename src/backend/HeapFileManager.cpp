@@ -30,8 +30,10 @@ bool HeapFileManager::process_insert_record(
   char * page_data = page.get_data();
 
   int slot_number = take_free_slot(page_data);
+#ifdef HFM_DBG
   Utils::info("[HeapFileManager] Record slot for insert is " + std::to_string(slot_number) +
      ". Table: " + table.name() + "; PageId: " + std::to_string(page.get_pid()));
+#endif
   page_data += slot_number * table.record_size() + table.space_for_bit_mask();
   
   //save values in order
@@ -65,7 +67,9 @@ bool HeapFileManager::process_insert_record(
 
   page.set_dirty();
   page.unpin();   //relese ASAP
+#ifdef HFM_DBG
   Utils::info("[HeapFileManager] Insertion finished. Unpin page #" + std::to_string(page.get_pid()));
+#endif
   pd.increment_records_count(page.get_pid());
 
   return true;
@@ -183,11 +187,19 @@ HeapFileManager::RecordsIterator::RecordsIterator(TableMetaData const & table, F
   pd(PagesDirectory(get_heap_file_name(table.name()))), page_itr_(pd.get_iterator()) { }
 
 bool HeapFileManager::RecordsIterator::switch_page() {
-  if (!page_itr_.next()) { return false; }
+  if (!page_itr_.next()) {
+#ifdef HFM_DBG
+    Utils::info("  [HFM][RecordsItr] Current page was last. Stop iteration");
+#endif
+    return false;
+  }
   
   page_data_ = page_itr_->get_data();
   records_data_ = page_data_ + t_meta_.space_for_bit_mask();
   current_slot_id_ = 0;
+#ifdef HFM_DBG
+  Utils::info("  [HFM][RecordsItr] Page with records was switched. New page has id " + std::to_string(page_itr_->get_pid()));
+#endif
   return true;
 }
 
@@ -207,7 +219,13 @@ bool HeapFileManager::RecordsIterator::next() {
     unsigned bm_byte = current_slot_id_ / 8;
     unsigned bm_bit = 1 << (7 - current_slot_id_ % 8);
     if ((*(page_data_ + bm_byte) & bm_bit) > 0) {
+#ifdef HFM_DBG
+      Utils::info("  [HFM][RecordsItr] Record in slot " + std::to_string(current_slot_id_) + " was found");
+#endif
       if (filter_.isOk(t_meta_, (void *)records_data_)) {
+#ifdef HFM_DBG
+        Utils::info("  [HFM][RecordsItr] Record in slot " + std::to_string(current_slot_id_) + " satisties filtering condition");
+#endif
         return true;
       }
     }

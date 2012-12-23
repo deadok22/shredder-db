@@ -1,11 +1,6 @@
 #include "DiskManager.h"
 
-DiskManager::DiskManager()
- :file_(0)
-{}
-
-
-
+DiskManager::DiskManager() :file_(0) {}
 
 bool DiskManager::init_file()
 {

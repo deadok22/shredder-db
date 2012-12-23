@@ -25,15 +25,17 @@ struct HashOperationParams {
 class ExtIndexManager {
 public:
   ExtIndexManager(std::string const & table_dir);
-  static void create_index(std::string const & path, TableMetaData_IndexMetadata const & metadata);
+  static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);
 
   int look_up_value(HashOperationParams * params);
-  bool insert_value(HashOperationParams * params);
+  bool insert_value(HashOperationParams const & params);
   bool delete_value(HashOperationParams * params);
 
 #ifndef TEST_EXT_IND
 private: //methods
 #endif
+  static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
+  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,HashOperationParams * params);
   static void init_buckets(std::string const & index_file_name, unsigned from, unsigned till, unsigned depth);
   bool bucket_has_free_slot(Page & bucket_id, unsigned record_size);
   void split_buckets(unsigned bucket_number);

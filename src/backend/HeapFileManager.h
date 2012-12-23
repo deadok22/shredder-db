@@ -3,18 +3,15 @@
 #include <string>
 
 #include "Page.h"
+#include "PagesDirectory.h"
 #include "../core/MetaDataProvider.h"
-
-class Filter { //mock filter, don't forget copy ctr
-public:
-  bool isOk(TableMetaData const & table, void * data) const { return true; }
-};
+#include "../core/Filter.h"
 
 class HeapFileManager {
 public://class
   class RecordsIterator {
   public:
-    RecordsIterator(TableMetaData const & table, Filter const & filter);
+    RecordsIterator(TableMetaData const & table, Filter const & filter = Filter::ANY);
     bool next();
     unsigned rec_page_id();
     unsigned rec_slot_id();
