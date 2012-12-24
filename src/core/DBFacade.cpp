@@ -126,7 +126,25 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
     return;
   }
 
-  hfm.print_all_records(*metadata);
+  if (stmt->has_where_clause()) {
+    //TOO fix THIS
+    ExtIndexManager a(InfoPool::get_instance().get_db_info().root_path + metadata->name() +
+       + "/ext_hash_a");
+    HashOperationParams params;
+    params.value_size = 4;
+    params.value = new char[sizeof(int)];
+    *((int *)params.value) = std::stoi(stmt->get_where_clause().get_predicates()[0].value);
+    if (a.look_up_value(&params) != -1) {
+
+      void * record = hfm.get_record(*metadata, params.page_id, params.slot_id);
+      hfm.print_record(*metadata, (char *)record);
+      delete [] (char *)record;
+    } else {
+      std::cout << "Nothing was found" << std::endl;
+    }
+  } else {
+    hfm.print_all_records(*metadata);
+  }
   delete metadata;
 }
 
@@ -142,6 +160,8 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   }
 
   hfm.process_insert_record(*metadata, stmt->get_column_names(), stmt->get_values());
+
+  //TODO add to all indices
   cout << "Insert OK" << std::endl;
   delete metadata;
 }

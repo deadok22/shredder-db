@@ -163,7 +163,7 @@ class SelectStatement : public TableTargetedStatement {
     }
     
     bool has_where_clause() const {
-      return where_clause_.is_empty();
+      return !where_clause_.is_empty();
     }
     
     virtual ~SelectStatement() {}

@@ -4,6 +4,7 @@
 #include "TableMetadata.pb.h"
 #include "../MetaDataProvider.h"
 #include "../../backend/HeapFileManager.h"
+#include "../../backend/Page.h"
 
 #include <fstream>
 
@@ -85,12 +86,7 @@ ExtIndexManager::ExtIndexManager(std::string const & index_path): index_path_(in
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
   std::string path = InfoPool::get_instance().get_db_info().root_path + table_name;
-
-  std::string attrs = ind_metadata.name() + "_";
-  for (int i = 0; i < ind_metadata.keys_size(); ++i) {
-    attrs += "_" + ind_metadata.keys(i).name();
-  }
-  std::string index_file_name = path + "/ext_hash_" + attrs;
+  std::string index_file_name = path + "/ext_hash_" + ind_metadata.name();
   std::string directory_file_name = index_file_name + ExtIndexManager::DIR_SUFFIX;
   
   //creates two files
@@ -129,6 +125,12 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
     init_params_with_record(*t_metadata, ind_metadata, rec_itr.rec_data(), &params);
     mock_manager.insert_value(params);
   }
+
+  Page &page = BufferManager::get_instance().get_page(2, index_file_name);
+  mock_manager.split_bucket(2, &page, params.value_size);
+  page.unpin();
+
+
   delete [] (char *)params.value;
   delete t_metadata;
 }
@@ -182,6 +184,9 @@ int ExtIndexManager::look_up_value(HashOperationParams * params) {
       //BINGO
       params->page_id = *((int *)data);
       params->slot_id = *((int *)data + 1);
+#ifdef EIM_DBG
+      Utils::info("  [EIM][Look up] Found record with id " + std::to_string(params->page_id) + ":" + std::to_string(params->slot_id));
+#endif
       break;
     }
 
@@ -203,12 +208,8 @@ bool ExtIndexManager::insert_value(HashOperationParams const & params) {
   Page &page = BufferManager::get_instance().get_page(bucket_id, index_path_);
   //TODO lookfor duplicates?
 
-  if (!bucket_has_free_slot(page, params.value_size + RECORD_ID_SIZE)) {
-    page.unpin();
-    Utils::error("[ExtInd] Bucket extension not implemented yet. Ignore for now");
-    return false;
-    //split bucket
-    //update current
+  if (!bucket_has_free_slot(&page, params.value_size + RECORD_ID_SIZE)) {
+    split_bucket(bucket_id, &page, params.value_size);
   }
 
   //skip depth and occupied
@@ -241,21 +242,93 @@ bool ExtIndexManager::delete_value(HashOperationParams * params) {
   return true;
 }
 
-void ExtIndexManager::split_buckets(unsigned bucket_number) {
-  //double bucket records in directory
+void ExtIndexManager::split_bucket(unsigned bucket_number, Page * bucket_page, unsigned record_size) {
+#ifdef EIM_DBG
+  Utils::info("[ExtInd] Split bucket " + std::to_string(bucket_number));
+#endif
+  unsigned bucket_depth = *((int *)bucket_page->get_data());
+  unsigned total = *((int *)bucket_page->get_data() + 1);
+  Page &meta_page = BufferManager::get_instance().get_page(0, index_path_+DIR_SUFFIX);
+  unsigned global_depth = *((int *)meta_page.get_data());
+  meta_page.unpin();
+  if (global_depth == bucket_depth) {
+    double_buckets_count();
+  }
+  ++bucket_depth;
+
+  //clear current bucket and save it to tmp memory
+  char *tmp = new char[Page::PAGE_SIZE]();
+  memcpy(tmp, bucket_page->get_data(), Page::PAGE_SIZE);
+  *((int *)bucket_page->get_data(false)) = bucket_depth;
+  *((int *)bucket_page->get_data() + 1) = 0;
+  bucket_page->set_dirty();
+
+  //init subl bucket
+  unsigned subl_bucket = bucket_number | (1 << (bucket_depth - 1));
+  Page &subl_bucket_page = BufferManager::get_instance().get_page(subl_bucket, index_path_);
+  *((int *)subl_bucket_page.get_data(false)) = bucket_depth;
+  *((int *)subl_bucket_page.get_data(false) + 1) = 0;
+  subl_bucket_page.unpin();
+#ifdef EIM_DBG
+  Utils::info("[ExtInd] Switch pointer #" + std::to_string(subl_bucket) + " from " + std::to_string(bucket_number) + " to " + std::to_string(subl_bucket));
+#endif
+  //change subl ptr
+  unsigned ptrs_per_page = Page::PAGE_SIZE / sizeof(int) - 1;
+  unsigned dir_page_number = subl_bucket / ptrs_per_page + 1;
+  unsigned dir_page_offset = subl_bucket % ptrs_per_page + 1;
+  Page &subl_bucket_dir_page = BufferManager::get_instance().get_page(dir_page_number, index_path_+DIR_SUFFIX);
+  *((int *)subl_bucket_dir_page.get_data(false) + dir_page_offset) = subl_bucket;
+  subl_bucket_dir_page.unpin();
 
   //perform rehashinh for problem bucket
+  char *record = tmp + PAGE_AUX_DATA_SIZE;
+  HashOperationParams params;
+  params.value_size = record_size;
+  for (unsigned i = 0; i < total; ++i) {
+    params.page_id = *((int *)record);
+    params.slot_id = *((int *)record + 1);
+    params.value = record + RECORD_ID_SIZE;
+    insert_value(params);
+    record += RECORD_ID_SIZE + record_size;
+  }
+  delete [] tmp;
 }
 
 void ExtIndexManager::double_buckets_count() {
-  //perform copying on directory
+  Page &meta_page = BufferManager::get_instance().get_page(0, index_path_ + DIR_SUFFIX);
+  unsigned global_depth = *((int *)meta_page.get_data());
+  ++*((int *)meta_page.get_data(false));
+  meta_page.unpin();
+#ifdef EIM_DBG
+  Utils::info("[ExtInd] Increase buckets count from " + std::to_string(1 << global_depth) + " to " + std::to_string(1 << (global_depth + 1)));
+#endif
 
-  //
-
+  unsigned ptrs = 1 << global_depth;
+  unsigned ind = 0;
+  BucketPointersIterator bpi(index_path_ + DIR_SUFFIX);
+  while (bpi.next() && ind < ptrs) {
+    unsigned bucket_id = *bpi;
+#ifdef EIM_DBG
+    Utils::info("    [EIM] Duplicate ptr #" + std::to_string(ind) + " that points to " + std::to_string(bucket_id));
+#endif
+    //TODO inline for optimization
+    add_ptr_to_index_dir(bucket_id, ind + ptrs);
+    ++ind;
+  }
 }
 
-bool ExtIndexManager::bucket_has_free_slot(Page & page, unsigned record_size) {
-  unsigned occupied = *((unsigned *)page.get_data() + 1);
+void ExtIndexManager::add_ptr_to_index_dir(unsigned bucket_id, unsigned total) {
+  unsigned ptrs_per_page = Page::PAGE_SIZE / sizeof(int) - 1;
+  unsigned dir_page_number = total / ptrs_per_page + 1;
+  unsigned dir_page_offset = total % ptrs_per_page + 1;
+  Page &last_bucket_dir_page = BufferManager::get_instance().get_page(dir_page_number, index_path_ + DIR_SUFFIX);
+  *((int *)last_bucket_dir_page.get_data(false) + dir_page_offset) = bucket_id;
+  *((int *)last_bucket_dir_page.get_data(false)) += 1;
+  last_bucket_dir_page.unpin();
+}
+
+bool ExtIndexManager::bucket_has_free_slot(Page * page, unsigned record_size) {
+  unsigned occupied = *((unsigned *)page->get_data() + 1);
   //page size - sizeof depth value - occupied slots
   unsigned max_records = (Page::PAGE_SIZE - PAGE_AUX_DATA_SIZE) / record_size;
   return occupied < max_records;

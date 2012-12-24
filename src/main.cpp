@@ -83,6 +83,7 @@ void repl() {
     } else if (fst_token.compare("PURGE") == 0) {
       BufferManager &bm = BufferManager::get_instance();
       bm.purge();
+      std::cout << "Purge has been done" << std::endl;
     } else if (fst_token.compare("ABOUT") == 0) {
       std::string table_name = command.substr(6);
 #ifdef MAIN_DBG

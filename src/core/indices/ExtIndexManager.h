@@ -37,11 +37,12 @@ private: //methods
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
   static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,HashOperationParams * params);
   static void init_buckets(std::string const & index_file_name, unsigned from, unsigned till, unsigned depth);
-  bool bucket_has_free_slot(Page & bucket_id, unsigned record_size);
-  void split_buckets(unsigned bucket_number);
+  bool bucket_has_free_slot(Page * bucket_id, unsigned record_size);
+  void split_bucket(unsigned bucket_number, Page * page, unsigned record_size);
   void double_buckets_count();
   unsigned compute_hash(HashOperationParams const & params);
   unsigned get_bucket_id(unsigned bucket_ptr);
+  void add_ptr_to_index_dir(unsigned bucket_id, unsigned total);
 
 private: //classes
   class BucketPointersIterator {

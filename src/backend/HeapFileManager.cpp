@@ -132,11 +132,11 @@ void HeapFileManager::print_record(TableMetaData const & table, char * page_data
 
 void * HeapFileManager::get_record(TableMetaData const & table, unsigned page_id, unsigned slot_number) {
   BufferManager &bm = BufferManager::get_instance();
-  Page &req_page = bm.get_page(page_id, table.name());
+  Page &req_page = bm.get_page(page_id, get_heap_file_name(table.name()));
 
-  //todo check if something is recorded
+  //NB check if something is recorded?
   char * data = new char[table.record_size()];
-  memcpy(data, req_page.get_data() + slot_number * table.record_size() + table.space_for_bit_mask(), table.record_size());
+  memcpy(data, (char *)req_page.get_data() + slot_number * table.record_size() + table.space_for_bit_mask(), table.record_size());
 
   req_page.unpin();
   return data;
@@ -172,9 +172,7 @@ std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & t
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
-  //TODO fix filter
-  Filter filter;
-  RecordsIterator records_itr(table, filter);
+  RecordsIterator records_itr(table);
   while (records_itr.next()) {
     print_record(table, (char *)records_itr.rec_data());
   }

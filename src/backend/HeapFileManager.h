@@ -49,11 +49,12 @@ public:
 
   static HeapFileManager & get_instance();
 
+// Page & get_page_for_insert(TableMetaData const & table);
+  void print_record(TableMetaData const & table, char * data);
+  
 private:
   static HeapFileManager * instance_;
 
-  // Page & get_page_for_insert(TableMetaData const & table);
-  void print_record(TableMetaData const & table, char * data);
   int take_free_slot(char * page_data);
   char * get_attr_value(void * data, TableMetaData const & table, std::string const & attr_name);
 
