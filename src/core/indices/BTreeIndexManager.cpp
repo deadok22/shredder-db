@@ -49,7 +49,7 @@ void BTreeIndexManager::create_index(
   *((unsigned *)root_page.get_data(false)) = LEAF_TYPE;
   *((unsigned *)root_page.get_data(false) + 1) = 0; //number of items
   *((unsigned *)root_page.get_data(false) + 2) = 0; //ptr to next data leaf
-  meta_page.unpin();
+  root_page.unpin();
 
   //insert records
   IndexOperationParams params;
@@ -115,8 +115,9 @@ int BTreeIndexManager::look_up_value(IndexOperationParams * params) {
   unsigned ins_index = find_offset_for_storage(data, RECORD_ID_SIZE, *params);
   unsigned ret_value = -1;
   if (ins_index != 0) {
-    char * record = data + (ins_index - 1) * entry_size + DATA_PAGE_HEADER_SIZE; 
-    if (memcmp(record + RECORD_ID_SIZE, params->value, params->value_size) == 0) {
+    char * record = data + ins_index * entry_size + DATA_PAGE_HEADER_SIZE; 
+    //TODO fix with comparator
+    if (*((int *)(record + RECORD_ID_SIZE)) == *((int *)params->value)) {
       params->page_id = *((unsigned *)record);
       params->slot_id = *((unsigned *)record + 1);
 #ifdef BTREE_DBG
@@ -390,6 +391,8 @@ unsigned BTreeIndexManager::find_offset_for_storage(char * data, unsigned aux_re
   unsigned record_index = 0;
   while (record_index < records_count) {
     char *key_data = data + aux_record_data_size;
+    //NB can be enhanced with binary search
+    //TODO repalace
     if (*((int *)key_data) >= *((int *)params.value)) { break; }
     data += aux_record_data_size + params.value_size;
     ++record_index;

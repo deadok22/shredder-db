@@ -15,6 +15,16 @@
 
 class BTreeIndexManager {
 public:
+
+  BTreeIndexManager(std::string const & table_dir, std::string const & index_name);
+  static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
+
+  int look_up_value(IndexOperationParams * params);
+  bool insert_value(IndexOperationParams const & params);
+  bool delete_value(IndexOperationParams * params);
+
+  unsigned get_key_size();
+private:
   struct SplitNodeOpContext {
     SplitNodeOpContext(char * current_node_data_, char * child_entry_, unsigned ins_index_,
       unsigned entry_size_, unsigned entries_per_page_):
@@ -26,18 +36,7 @@ public:
     unsigned ins_index;
     unsigned entry_size;
     unsigned entries_per_page;
-
   };
-public:
-
-  BTreeIndexManager(std::string const & table_dir, std::string const & index_name);
-  static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
-
-  int look_up_value(IndexOperationParams * params);
-  bool insert_value(IndexOperationParams const & params);
-  bool delete_value(IndexOperationParams * params);
-
-  unsigned get_key_size();
 private:
   //TODO remove duplication
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
