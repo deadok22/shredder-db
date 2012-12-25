@@ -21,6 +21,7 @@ public:
   void force();
 
   //for debug
+  void print_pinned_page();
   unsigned get_pinned_page_count();
 private:
 
