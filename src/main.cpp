@@ -84,6 +84,9 @@ void repl() {
       BufferManager &bm = BufferManager::get_instance();
       bm.purge();
       std::cout << "Purge has been done" << std::endl;
+    } else if (fst_token.compare("BMST") == 0) {
+      std::cout << "BufferManager state:" << std::endl;
+      std::cout << "  Pinned pages: " + std::to_string(BufferManager::get_instance().get_pinned_page_count()) << std::endl;
     } else if (fst_token.compare("ABOUT") == 0) {
       std::string table_name = command.substr(6);
 #ifdef MAIN_DBG
@@ -104,6 +107,8 @@ int main(int argc, char ** argv) {
     std::cout << "Not enough arguments. Args: <path to dir> <max page number>" << std::endl;
     return 0;
   }
+
+  std::cout << "Welcome to ShredderDB." << std::endl;
 
   InfoPool::get_instance().get_db_info().root_path = argv[1];
   InfoPool::get_instance().get_db_info().max_page_cnt = std::stoi(argv[2]);

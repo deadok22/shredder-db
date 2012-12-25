@@ -20,6 +20,8 @@ public:
   void purge();
   void force();
 
+  //for debug
+  unsigned get_pinned_page_count();
 private:
 
   BufferManager();

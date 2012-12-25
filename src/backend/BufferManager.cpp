@@ -91,6 +91,14 @@ Page* BufferManager::find_page(size_t page_id,string const& fname) {
   return 0;  
 }
 
+unsigned BufferManager::get_pinned_page_count() {
+  unsigned pinned_pages_cnt = 0;
+  for(vector<Page*>::iterator i = buffer_.begin(),  e = buffer_.end(); i != e;++i){
+    if(!(*i)->is_unpinned()){ ++pinned_pages_cnt; }
+  }
+  return pinned_pages_cnt;
+}
+
 vector<Page*>::iterator BufferManager::find_unpinned_page()
 {
   for(vector<Page*>::iterator i = buffer_.begin(),  e = buffer_.end(); i != e;++i){
