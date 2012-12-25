@@ -40,6 +40,7 @@ build_core: init build_common build_proto
 	g++ src/core/MetaDataProvider.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/MetaDataProvider.o
 	g++ src/core/Filter.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/Filter.o
 	g++ src/core/DBFacade.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/DBFacade.o
+	g++ src/core/QueryPlanner.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/QueryPlanner.o
 	g++ src/core/indices/ExtIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/ExtIndexManager.o
 	g++ src/core/indices/BTreeIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/BTreeIndexManager.o
 

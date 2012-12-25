@@ -19,6 +19,8 @@ public:
   static void info(string const & msg, ostream & stream = std::cout);
   static void warning(string const & msg, ostream & stream = std::cout);
   static void error(string const & msg, ostream & stream = std::cout);
+
+  static std::string get_table_dir(std::string const & table_name);
 };
 
 //TEST_CODE

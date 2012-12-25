@@ -16,8 +16,8 @@ size_t const BTreeIndexManager::NODE_PTR_SIZE = sizeof(int);
 unsigned const BTreeIndexManager::LEAF_TYPE = 0xEFBE;
 unsigned const BTreeIndexManager::NODE_TYPE = 0xDEDE;
 
-BTreeIndexManager::BTreeIndexManager(std::string const & table_dir, std::string const & index_name):
-  index_file_name_(table_dir + "/btree_" + index_name) { }
+BTreeIndexManager::BTreeIndexManager(std::string const & table_name, std::string const & index_name):
+  index_file_name_(Utils::get_table_dir(table_name) + "/btree_" + index_name) {}
 
 void BTreeIndexManager::create_index(
   std::string const & table_name,
@@ -60,8 +60,8 @@ void BTreeIndexManager::create_index(
   Utils::info("[BTree][Create index] Insert values into index... ");
 #endif
 
-  HeapFileManager::HeapRecordsIterator rec_itr(*t_metadata);
-  BTreeIndexManager mock_manager(table_path, ind_metadata.name());
+  HeapFileManager::HeapRecordsIterator rec_itr(t_metadata->name());
+  BTreeIndexManager mock_manager(t_metadata->name(), ind_metadata.name());
   while (rec_itr.next()) {
     params.page_id = rec_itr.record_page_id();
     params.slot_id = rec_itr.record_slot_id();
@@ -444,24 +444,27 @@ unsigned BTreeIndexManager::get_left_most_leaf() const {
   return left_most_id;
 }
 
- BTreeIndexManager::SortedIterator BTreeIndexManager::get_sorted_records_iterator() {
-   return SortedIterator(*this, index_file_name_);
- }
+std::string BTreeIndexManager::get_index_file_name() const { return index_file_name_; }
 
 //-----------------------------------------------------------------------------
 // Sorted iterator
 
-BTreeIndexManager::SortedIterator::SortedIterator(BTreeIndexManager const &btm, std::string const & index_table):
-  btm_(btm), index_table_(index_table), current_page_(NULL), page_offset_(0), records_to_go_(0), key_size_(0) {
-  key_size_ = btm_.get_key_size();
+BTreeIndexManager::SortedIterator::SortedIterator(std::string const & table_name, std::string const & index_name):
+  btm_(new BTreeIndexManager(table_name, index_name)), t_metadata(NULL), current_page_(NULL),
+  page_offset_(0), records_to_go_(0), key_size_(0), record_data_(NULL) {
+
+  t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
+  key_size_ = btm_->get_key_size();
 }
 
 BTreeIndexManager::SortedIterator::~SortedIterator() {
   if (current_page_ != NULL) { current_page_->unpin(); }
+  delete t_metadata;
+  if (record_data_ != NULL) { delete [] (char *)record_data_; }
 }
 
 bool BTreeIndexManager::SortedIterator::switch_page() {
-  unsigned page_id = current_page_ == NULL ? btm_.get_left_most_leaf() : *((unsigned *)current_page_->get_data() + 2);
+  unsigned page_id = current_page_ == NULL ? btm_->get_left_most_leaf() : *((unsigned *)current_page_->get_data() + 2);
 #ifdef BTREE_SI_DBG
   Utils::info("[BTree][SortIter] Next leaf page id is " + std::to_string(page_id));
 #endif
@@ -472,9 +475,9 @@ bool BTreeIndexManager::SortedIterator::switch_page() {
     return false;
   }
 
-  current_page_ = &BufferManager::get_instance().get_page(page_id, index_table_);  
+  current_page_ = &BufferManager::get_instance().get_page(page_id, btm_->get_index_file_name());  
   page_offset_ = DATA_PAGE_HEADER_SIZE;
-  records_to_go_ = btm_.get_records_count(current_page_->get_data()) - 1;
+  records_to_go_ = btm_->get_records_count(current_page_->get_data()) - 1;
 #ifdef BTREE_SI_DBG
   Utils::info("[BTree][SortIter] Switch successfull. Number records to process is " + std::to_string(records_to_go_));
 #endif
@@ -482,6 +485,10 @@ bool BTreeIndexManager::SortedIterator::switch_page() {
 }
 
 bool BTreeIndexManager::SortedIterator::next() {
+  if (record_data_ != NULL) {
+    delete [] (char *)record_data_;
+    record_data_ = NULL;
+  }
   if (records_to_go_ > 0) {
     --records_to_go_;
     page_offset_ += RECORD_ID_SIZE + key_size_;
@@ -491,10 +498,17 @@ bool BTreeIndexManager::SortedIterator::next() {
   return switch_page();
 }
 
-unsigned BTreeIndexManager::SortedIterator::get_record_page() {
+void * BTreeIndexManager::SortedIterator::operator*() {
+  if (record_data_ == NULL) {
+    record_data_ = HeapFileManager::get_instance().get_record(*t_metadata, this->record_page_id(), this->record_slot_id());
+  }
+  return record_data_;  
+}
+
+unsigned BTreeIndexManager::SortedIterator::record_page_id() {
   return *((unsigned *)(current_page_->get_data() + page_offset_));
 }
-unsigned BTreeIndexManager::SortedIterator::get_record_slot() {
+unsigned BTreeIndexManager::SortedIterator::record_slot_id() {
   return *(((unsigned *)(current_page_->get_data() + page_offset_)) + 1);
 }
 

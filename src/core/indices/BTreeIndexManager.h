@@ -5,6 +5,7 @@
 //in make -I option is used, so we don't need to go a dir upper
 #include "TableMetadata.pb.h"
 #include "../../backend/Page.h"
+#include "../RecordsIterator.h"
 
 //File format
 // 0th page -- meta data: root_ptr; key_size; pages_used
@@ -15,29 +16,31 @@
 
 class BTreeIndexManager {
 public:
-  class SortedIterator {
+  class SortedIterator : public RecordsIterator {
   public:
-    SortedIterator(BTreeIndexManager const &btm, std::string const & index_table);
+    SortedIterator(std::string const & table_name, std::string const & index_name);
 
-    ~SortedIterator();
-
-    bool next();
-    unsigned get_record_page();
-    unsigned get_record_slot();
+    virtual ~SortedIterator();
+    
+    virtual bool next();
+    virtual void * operator*();
+    virtual unsigned record_page_id();
+    virtual unsigned record_slot_id();
   private:
     bool switch_page();
   private:
-    BTreeIndexManager const &btm_;
-    std::string index_table_;
+    BTreeIndexManager * btm_;
 
+    TableMetaData * t_metadata;
     Page * current_page_;
     unsigned page_offset_;
     unsigned records_to_go_;
     unsigned key_size_;
+    void * record_data_;
   };
 public:
-
-  BTreeIndexManager(std::string const & table_dir, std::string const & index_name);
+BTreeIndexManager() {}
+  BTreeIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
 
   int look_up_value(IndexOperationParams * params);
@@ -46,6 +49,7 @@ public:
   BTreeIndexManager::SortedIterator get_sorted_records_iterator();
 
   unsigned get_key_size() const;
+  std::string get_index_file_name() const;
 private:
   struct SplitNodeOpContext {
     SplitNodeOpContext(char * current_node_data_, char * child_entry_, unsigned ins_index_,
