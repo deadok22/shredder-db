@@ -197,7 +197,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
     Utils::info("[BTree][Insert][Top Down] Process LEAF node with id " + std::to_string(node_id));
 #endif
     size_t entry_size = params.value_size + RECORD_ID_SIZE;
-    unsigned entries_per_page = 2;//(Page::PAGE_SIZE - DATA_PAGE_HEADER_SIZE) / entry_size; 
+    unsigned entries_per_page = (Page::PAGE_SIZE - DATA_PAGE_HEADER_SIZE) / entry_size; 
 
     unsigned ins_index = find_offset_for_storage(data, RECORD_ID_SIZE, params);
     if (number_of_items < entries_per_page) {
@@ -244,7 +244,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
       
     size_t entry_size = params.value_size + NODE_PTR_SIZE;
     //also count last entra ptr
-    unsigned entries_per_page = 2;//(Page::PAGE_SIZE - DATA_PAGE_HEADER_SIZE - NODE_PTR_SIZE) / entry_size; 
+    unsigned entries_per_page = (Page::PAGE_SIZE - DATA_PAGE_HEADER_SIZE - NODE_PTR_SIZE) / entry_size; 
     
     IndexOperationParams search_params;
     search_params.value = (char *)child_entry + NODE_PTR_SIZE;
