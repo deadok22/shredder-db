@@ -9,9 +9,9 @@
 
 class HeapFileManager {
 public://class
-  class RecordsIterator {
+  class HeapRecordsIterator {
   public:
-    RecordsIterator(TableMetaData const & table, Filter const & filter = Filter::ANY);
+    HeapRecordsIterator(TableMetaData const & table, Filter const & filter = Filter::ANY);
     bool next();
     unsigned rec_page_id();
     unsigned rec_slot_id();

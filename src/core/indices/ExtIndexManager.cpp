@@ -117,7 +117,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   Utils::info("[EIM][Create index] Insert values into index... ");
 #endif
 
-  HeapFileManager::RecordsIterator rec_itr(*t_metadata);
+  HeapFileManager::HeapRecordsIterator rec_itr(*t_metadata);
   ExtIndexManager mock_manager(index_file_name);
   while (rec_itr.next()) {
     params.page_id = rec_itr.rec_page_id();

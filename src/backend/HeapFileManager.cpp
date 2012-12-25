@@ -172,7 +172,7 @@ std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & t
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
-  RecordsIterator records_itr(table);
+  HeapRecordsIterator records_itr(table);
   unsigned total = 0;
   while (records_itr.next()) {
     print_record(table, (char *)records_itr.rec_data());
@@ -184,11 +184,11 @@ void HeapFileManager::print_all_records(TableMetaData const & table) {
 //-----------------------------------------------------------------------------
 // Records iterator
 
-HeapFileManager::RecordsIterator::RecordsIterator(TableMetaData const & table, Filter const & filter):
+HeapFileManager::HeapRecordsIterator::HeapRecordsIterator(TableMetaData const & table, Filter const & filter):
   t_meta_(table), filter_(filter), records_data_(NULL), page_data_(NULL), current_slot_id_(0),
   pd(PagesDirectory(get_heap_file_name(table.name()))), page_itr_(pd.get_iterator()) { }
 
-bool HeapFileManager::RecordsIterator::switch_page() {
+bool HeapFileManager::HeapRecordsIterator::switch_page() {
   if (!page_itr_.next()) {
 #ifdef HFM_DBG
     Utils::info("  [HFM][RecordsItr] Current page was last. Stop iteration");
@@ -205,7 +205,7 @@ bool HeapFileManager::RecordsIterator::switch_page() {
   return true;
 }
 
-bool HeapFileManager::RecordsIterator::next() {
+bool HeapFileManager::HeapRecordsIterator::next() {
   if (current_slot_id_ == t_meta_.records_per_page() && page_data_ == NULL) {
     return false;
   }
@@ -235,6 +235,6 @@ bool HeapFileManager::RecordsIterator::next() {
 
 }
 
-unsigned HeapFileManager::RecordsIterator::rec_page_id() { return page_itr_->get_pid(); }
-unsigned HeapFileManager::RecordsIterator::rec_slot_id() { return current_slot_id_; }
-void * HeapFileManager::RecordsIterator::rec_data() { return records_data_; }
+unsigned HeapFileManager::HeapRecordsIterator::rec_page_id() { return page_itr_->get_pid(); }
+unsigned HeapFileManager::HeapRecordsIterator::rec_slot_id() { return current_slot_id_; }
+void * HeapFileManager::HeapRecordsIterator::rec_data() { return records_data_; }

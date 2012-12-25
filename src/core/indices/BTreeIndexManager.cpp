@@ -60,7 +60,7 @@ void BTreeIndexManager::create_index(
   Utils::info("[BTree][Create index] Insert values into index... ");
 #endif
 
-  HeapFileManager::RecordsIterator rec_itr(*t_metadata);
+  HeapFileManager::HeapRecordsIterator rec_itr(*t_metadata);
   BTreeIndexManager mock_manager(table_path, ind_metadata.name());
   while (rec_itr.next()) {
     params.page_id = rec_itr.rec_page_id();
