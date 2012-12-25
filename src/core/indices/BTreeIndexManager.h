@@ -4,6 +4,7 @@
 #include "IndexOperationParams.h"
 //in make -I option is used, so we don't need to go a dir upper
 #include "TableMetadata.pb.h"
+#include "../../backend/Page.h"
 
 //File format
 // 0th page -- meta data: root_ptr; key_size; pages_used
@@ -12,8 +13,28 @@
 // for nodes ptr value ptr ... ptr value ... ptr
 // for leafs: page_id:slot_id values...
 
-
 class BTreeIndexManager {
+public:
+  class SortedIterator {
+  public:
+    SortedIterator(BTreeIndexManager const &btm, std::string const & index_table);
+
+    ~SortedIterator();
+
+    bool next();
+    unsigned get_record_page();
+    unsigned get_record_slot();
+  private:
+    bool switch_page();
+  private:
+    BTreeIndexManager const &btm_;
+    std::string index_table_;
+
+    Page * current_page_;
+    unsigned page_offset_;
+    unsigned records_to_go_;
+    unsigned key_size_;
+  };
 public:
 
   BTreeIndexManager(std::string const & table_dir, std::string const & index_name);
@@ -22,8 +43,9 @@ public:
   int look_up_value(IndexOperationParams * params);
   bool insert_value(IndexOperationParams const & params);
   bool delete_value(IndexOperationParams * params);
+  BTreeIndexManager::SortedIterator get_sorted_records_iterator();
 
-  unsigned get_key_size();
+  unsigned get_key_size() const;
 private:
   struct SplitNodeOpContext {
     SplitNodeOpContext(char * current_node_data_, char * child_entry_, unsigned ins_index_,
@@ -42,11 +64,11 @@ private:
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
   static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,IndexOperationParams * params);
 //info retrievers
-  unsigned get_records_count(char * data);
+  unsigned get_records_count(char * data) const;
   void set_records_count(char * data, unsigned new_rec_cnt);
-  unsigned get_root_node();
+  unsigned get_root_node() const;
   unsigned get_new_page_id();
-  unsigned get_int_value_by_offset(unsigned page_id, unsigned offset);
+  unsigned get_int_value_by_offset(unsigned page_id, unsigned offset) const;
 
 //aux helpers
   void change_root(char *entry);
@@ -57,6 +79,7 @@ private:
   void insert_into_leaf(char * data, unsigned index, IndexOperationParams const & params);
   void insert_into_node(char * data, unsigned index, char * entry);
 
+  unsigned get_left_most_leaf() const;
 //core operations
   int tree_search(unsigned node_id, IndexOperationParams * params);
   void tree_insert(unsigned node_id, IndexOperationParams const & params, void *& child_entry);

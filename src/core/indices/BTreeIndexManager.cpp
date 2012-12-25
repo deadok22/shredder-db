@@ -402,7 +402,7 @@ unsigned BTreeIndexManager::find_offset_for_storage(char * data, unsigned aux_re
 
 
 bool BTreeIndexManager::delete_value(IndexOperationParams * params) {
-
+  Utils::warning("[BTREE] Delete is unimplemented");
   return false;
 }
 
@@ -413,16 +413,88 @@ unsigned BTreeIndexManager::get_new_page_id() {
   meta_page.unpin();
   return pages_used;  
 }
-unsigned BTreeIndexManager::get_root_node() { return get_int_value_by_offset(0, 0); }
-unsigned BTreeIndexManager::get_key_size() { return get_int_value_by_offset(0, 1); }
-unsigned BTreeIndexManager::get_records_count(char * data) { return *((unsigned *)data + 1); }
+unsigned BTreeIndexManager::get_root_node() const { return get_int_value_by_offset(0, 0); }
+unsigned BTreeIndexManager::get_key_size() const { return get_int_value_by_offset(0, 1); }
+unsigned BTreeIndexManager::get_records_count(char * data) const { return *((unsigned *)data + 1); }
 void BTreeIndexManager::set_records_count(char * data, unsigned new_rec_cnt) { *((unsigned *)data + 1) = new_rec_cnt;}
 
-unsigned BTreeIndexManager::get_int_value_by_offset(unsigned page_id, unsigned offset) {
+unsigned BTreeIndexManager::get_int_value_by_offset (unsigned page_id, unsigned offset) const {
   BufferManager &bm = BufferManager::get_instance();
   Page &meta_page = bm.get_page(page_id, index_file_name_);
   unsigned data = *((unsigned *)meta_page.get_data() + offset);
   meta_page.unpin();
   return data;
+}
+
+unsigned BTreeIndexManager::get_left_most_leaf() const {
+  unsigned left_most_id = get_root_node();
+  bool found = false;
+  while (!found) {
+    Page &condidate = BufferManager::get_instance().get_page(left_most_id, index_file_name_);
+    char *data = condidate.get_data();
+    if (*((unsigned *)data) == LEAF_TYPE) {
+      found = true;
+    } else { 
+      //NB do we need to handle empty node??
+      left_most_id = *((unsigned *)(data + DATA_PAGE_HEADER_SIZE));
+    }
+    condidate.unpin();
+  }
+
+  return left_most_id;
+}
+
+ BTreeIndexManager::SortedIterator BTreeIndexManager::get_sorted_records_iterator() {
+   return SortedIterator(*this, index_file_name_);
+ }
+
+//-----------------------------------------------------------------------------
+// Sorted iterator
+
+BTreeIndexManager::SortedIterator::SortedIterator(BTreeIndexManager const &btm, std::string const & index_table):
+  btm_(btm), index_table_(index_table), current_page_(NULL), page_offset_(0), records_to_go_(0), key_size_(0) {
+  key_size_ = btm_.get_key_size();
+}
+
+BTreeIndexManager::SortedIterator::~SortedIterator() {
+  if (current_page_ != NULL) { current_page_->unpin(); }
+}
+
+bool BTreeIndexManager::SortedIterator::switch_page() {
+  unsigned page_id = current_page_ == NULL ? btm_.get_left_most_leaf() : *((unsigned *)current_page_->get_data() + 2);
+#ifdef BTREE_SI_DBG
+  Utils::info("[BTree][SortIter] Next leaf page id is " + std::to_string(page_id));
+#endif
+  if (page_id == 0) { 
+#ifdef BTREE_SI_DBG
+    Utils::info("[BTree][SortIter] Switch failed");
+#endif
+    return false;
+  }
+
+  current_page_ = &BufferManager::get_instance().get_page(page_id, index_table_);  
+  page_offset_ = DATA_PAGE_HEADER_SIZE;
+  records_to_go_ = btm_.get_records_count(current_page_->get_data()) - 1;
+#ifdef BTREE_SI_DBG
+  Utils::info("[BTree][SortIter] Switch successfull. Number records to process is " + std::to_string(records_to_go_));
+#endif
+  return true;
+}
+
+bool BTreeIndexManager::SortedIterator::next() {
+  if (records_to_go_ > 0) {
+    --records_to_go_;
+    page_offset_ += RECORD_ID_SIZE + key_size_;
+    return true;
+  }
+
+  return switch_page();
+}
+
+unsigned BTreeIndexManager::SortedIterator::get_record_page() {
+  return *((unsigned *)(current_page_->get_data() + page_offset_));
+}
+unsigned BTreeIndexManager::SortedIterator::get_record_slot() {
+  return *(((unsigned *)(current_page_->get_data() + page_offset_)) + 1);
 }
 
