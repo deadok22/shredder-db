@@ -1,5 +1,7 @@
 #include "Utils.h"
 
+#include "InfoPool.h"
+
 using namespace std;
 
 void Utils::log(string const & msg, LogLevel log_level, ostream & stream) {
@@ -47,4 +49,8 @@ void Utils::error(string const & msg, ostream & stream) {
 #ifdef DEBUG  
   Utils::log(msg, ERROR, stream);
 #endif
+}
+
+std::string Utils::get_table_dir(std::string const & table_name) {
+  return InfoPool::get_instance().get_db_info().root_path + table_name;
 }

@@ -12,14 +12,15 @@ class HeapFileManager {
 public://class
   class HeapRecordsIterator : public RecordsIterator {
   public:
-    HeapRecordsIterator(TableMetaData const & table, Filter const & filter = Filter::ANY);
+    HeapRecordsIterator(std::string const & table_name, Filter const & filter = Filter::ANY);
+    virtual ~HeapRecordsIterator();
     virtual bool next();
     virtual unsigned record_page_id();
     virtual unsigned record_slot_id();
     virtual void * operator*();
   private:
     bool switch_page();
-    TableMetaData const & t_meta_;
+    TableMetaData * t_meta_;
     Filter const & filter_;
 
     char * records_data_;

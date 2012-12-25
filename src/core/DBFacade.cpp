@@ -7,11 +7,12 @@
 #include "../common/InfoPool.h" 
 #include "../backend/PagesDirectory.h"
 #include "../backend/HeapFileManager.h"
+#include "QueryPlanner.h"
 
 #include "indices/BTreeIndexManager.h"
 #include "indices/ExtIndexManager.h"
 #include "indices/IndexOperationParams.h"
-
+#include "RecordsIterator.h"
 DBFacade * DBFacade::instance_ = new DBFacade();
 
 DBFacade * DBFacade::get_instance() {
@@ -128,25 +129,15 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
     return;
   }
 
-  if (stmt->has_where_clause()) {
-    //TOO fix THIS
-    ExtIndexManager a(InfoPool::get_instance().get_db_info().root_path + metadata->name() +
-       + "/ext_hash_a");
-    IndexOperationParams params;
-    params.value_size = 4;
-    params.value = new char[sizeof(int)];
-    *((int *)params.value) = std::stoi(stmt->get_where_clause().get_predicates()[0].value);
-    if (a.look_up_value(&params) != -1) {
+  std::vector<WhereClause::Predicate> conds = stmt->has_where_clause() ? stmt->get_where_clause().get_predicates() : vector<WhereClause::Predicate>();
+  RecordsIterator *rec_itr = QueryPlanner::get_instance().executeSelect(*metadata, conds);
 
-      void * record = hfm.get_record(*metadata, params.page_id, params.slot_id);
-      hfm.print_record(*metadata, (char *)record);
-      delete [] (char *)record;
-    } else {
-      std::cout << "Nothing was found" << std::endl;
-    }
-  } else {
-    hfm.print_all_records(*metadata);
+  while (rec_itr->next()) {
+
+    hfm.print_record(*metadata, (char *)**rec_itr);
   }
+
+  delete rec_itr;
   delete metadata;
 }
 

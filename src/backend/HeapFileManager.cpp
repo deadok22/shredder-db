@@ -172,7 +172,7 @@ std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & t
 }
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
-  HeapRecordsIterator records_itr(table);
+  HeapRecordsIterator records_itr(table.name());
   unsigned total = 0;
   while (records_itr.next()) {
     print_record(table, (char *)*records_itr);
@@ -184,9 +184,17 @@ void HeapFileManager::print_all_records(TableMetaData const & table) {
 //-----------------------------------------------------------------------------
 // Records iterator
 
-HeapFileManager::HeapRecordsIterator::HeapRecordsIterator(TableMetaData const & table, Filter const & filter):
-  t_meta_(table), filter_(filter), records_data_(NULL), page_data_(NULL), current_slot_id_(0),
-  pd(PagesDirectory(get_heap_file_name(table.name()))), page_itr_(pd.get_iterator()) { }
+HeapFileManager::HeapRecordsIterator::HeapRecordsIterator(std::string const & table_name, Filter const & filter):
+  t_meta_(NULL), filter_(filter), records_data_(NULL), page_data_(NULL), current_slot_id_(0),
+  pd(PagesDirectory(get_heap_file_name(table_name))), page_itr_(pd.get_iterator()) {
+
+  t_meta_ = MetaDataProvider::get_instance()->get_meta_data(table_name);
+}
+
+HeapFileManager::HeapRecordsIterator::~HeapRecordsIterator() {
+  delete t_meta_;
+}
+
 
 bool HeapFileManager::HeapRecordsIterator::switch_page() {
   if (!page_itr_.next()) {
@@ -197,7 +205,7 @@ bool HeapFileManager::HeapRecordsIterator::switch_page() {
   }
   
   page_data_ = page_itr_->get_data();
-  records_data_ = page_data_ + t_meta_.space_for_bit_mask();
+  records_data_ = page_data_ + t_meta_->space_for_bit_mask();
   current_slot_id_ = 0;
 #ifdef HFM_DBG
   Utils::info("  [HFM][RecordsItr] Page with records was switched. New page has id " + std::to_string(page_itr_->get_pid()));
@@ -206,14 +214,14 @@ bool HeapFileManager::HeapRecordsIterator::switch_page() {
 }
 
 bool HeapFileManager::HeapRecordsIterator::next() {
-  if (current_slot_id_ == t_meta_.records_per_page() && page_data_ == NULL) {
+  if (current_slot_id_ == t_meta_->records_per_page() && page_data_ == NULL) {
     return false;
   }
 
   while (true) {
     ++current_slot_id_;
-    records_data_ += t_meta_.record_size();
-    if (current_slot_id_ == t_meta_.records_per_page()) { page_data_ = NULL; }
+    records_data_ += t_meta_->record_size();
+    if (current_slot_id_ == t_meta_->records_per_page()) { page_data_ = NULL; }
     if (page_data_ == NULL && !switch_page()) {
       return false;
     }
@@ -224,7 +232,7 @@ bool HeapFileManager::HeapRecordsIterator::next() {
 #ifdef HFM_DBG
       Utils::info("  [HFM][RecordsItr] Record in slot " + std::to_string(current_slot_id_) + " was found");
 #endif
-      if (filter_.isOk(t_meta_, (void *)records_data_)) {
+      if (filter_.isOk(*t_meta_, (void *)records_data_)) {
 #ifdef HFM_DBG
         Utils::info("  [HFM][RecordsItr] Record in slot " + std::to_string(current_slot_id_) + " satisties filtering condition");
 #endif
