@@ -1,6 +1,6 @@
 Utils::log -- сделать логинг разноцветным
 
 BUGS:
-
--- пуджется всего одна страница
--- выедается память как будно буффер менеджера и нет
+-- Before index creating che if table exists
+-- 'Pins' leak in hash index
+-- 'Pins' leak in tree index

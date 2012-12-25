@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "ExtIndexManager.h"
 #include "../../backend/BufferManager.h"
 #include "../../common/Utils.h"
@@ -5,8 +7,6 @@
 #include "../MetaDataProvider.h"
 #include "../../backend/HeapFileManager.h"
 #include "../../backend/Page.h"
-
-#include <fstream>
 
 std::string const ExtIndexManager::DIR_SUFFIX("_directory");
 unsigned const ExtIndexManager::INIT_BUCKET_DEPTH = 3;
@@ -109,7 +109,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   //insert records
   TableMetaData * t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
 
-  HashOperationParams params;
+  IndexOperationParams params;
   params.value_size = compute_key_size(*t_metadata, ind_metadata);
   params.value = new char[params.value_size];
 #ifdef EIM_DBG
@@ -125,11 +125,6 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
     init_params_with_record(*t_metadata, ind_metadata, rec_itr.rec_data(), &params);
     mock_manager.insert_value(params);
   }
-
-  Page &page = BufferManager::get_instance().get_page(2, index_file_name);
-  mock_manager.split_bucket(2, &page, params.value_size);
-  page.unpin();
-
 
   delete [] (char *)params.value;
   delete t_metadata;
@@ -151,7 +146,7 @@ size_t ExtIndexManager::compute_key_size(TableMetaData const & t_meta, TableMeta
   return key_size;
 }
 
-void ExtIndexManager::init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, HashOperationParams * params) {
+void ExtIndexManager::init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, IndexOperationParams * params) {
   size_t rec_offset = 0;
   size_t key_offset = 0;
   for (int i = 0; i < i_meta.keys_size(); ++i) {
@@ -165,7 +160,7 @@ void ExtIndexManager::init_params_with_record(TableMetaData const & t_meta, Tabl
   }
 }
 
-int ExtIndexManager::look_up_value(HashOperationParams * params) {
+int ExtIndexManager::look_up_value(IndexOperationParams * params) {
   unsigned bucket_id = get_bucket_id(compute_hash(*params));
 
   Page &page = BufferManager::get_instance().get_page(bucket_id, index_path_);
@@ -198,7 +193,7 @@ int ExtIndexManager::look_up_value(HashOperationParams * params) {
   return bucket_record_index == occupied ? -1 : bucket_record_index;
 }
 
-bool ExtIndexManager::insert_value(HashOperationParams const & params) {
+bool ExtIndexManager::insert_value(IndexOperationParams const & params) {
   unsigned bucket_id = get_bucket_id(compute_hash(params));
 #ifdef EIM_DBG
   Utils::info("[EIM][Insert value] Insert record with heap id " + std::to_string(params.page_id) +
@@ -227,7 +222,7 @@ bool ExtIndexManager::insert_value(HashOperationParams const & params) {
 }
 
 //TODO finish
-bool ExtIndexManager::delete_value(HashOperationParams * params) {
+bool ExtIndexManager::delete_value(IndexOperationParams * params) {
   int offset = look_up_value(params);
   if (offset == -1) { return false; }
 
@@ -282,7 +277,7 @@ void ExtIndexManager::split_bucket(unsigned bucket_number, Page * bucket_page, u
 
   //perform rehashinh for problem bucket
   char *record = tmp + PAGE_AUX_DATA_SIZE;
-  HashOperationParams params;
+  IndexOperationParams params;
   params.value_size = record_size;
   for (unsigned i = 0; i < total; ++i) {
     params.page_id = *((int *)record);
@@ -371,7 +366,7 @@ void ExtIndexManager::init_buckets(std::string const & index_file_name, unsigned
   }
 }
 
-unsigned ExtIndexManager::compute_hash(HashOperationParams const & params) {
+unsigned ExtIndexManager::compute_hash(IndexOperationParams const & params) {
   unsigned base = 0;
 
   char * data = (char *)params.value;

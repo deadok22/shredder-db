@@ -173,9 +173,12 @@ std::string HeapFileManager::get_vchar_attr(void * data, TableMetaData const & t
 
 void HeapFileManager::print_all_records(TableMetaData const & table) {
   RecordsIterator records_itr(table);
+  unsigned total = 0;
   while (records_itr.next()) {
     print_record(table, (char *)records_itr.rec_data());
+    ++total;
   }
+  std::cout << "Select finished. Total " << total << " records" << std::endl;
 }
 
 //-----------------------------------------------------------------------------

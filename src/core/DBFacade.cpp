@@ -7,7 +7,10 @@
 #include "../common/InfoPool.h" 
 #include "../backend/PagesDirectory.h"
 #include "../backend/HeapFileManager.h"
+
+#include "indices/BTreeIndexManager.h"
 #include "indices/ExtIndexManager.h"
+#include "indices/IndexOperationParams.h"
 
 DBFacade * DBFacade::instance_ = new DBFacade();
 
@@ -65,8 +68,7 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
 #endif
     ExtIndexManager::create_index(stmt->get_table_name(), index_metadata);
   } else {
-    //todo inmplement BTREE
-    Utils::warning("[DBFacade] Btree index creation is not impelemnted");  
+    BTreeIndexManager::create_index(stmt->get_table_name(), index_metadata);
   }
 
 #ifdef DBFACADE_DBG
@@ -130,7 +132,7 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
     //TOO fix THIS
     ExtIndexManager a(InfoPool::get_instance().get_db_info().root_path + metadata->name() +
        + "/ext_hash_a");
-    HashOperationParams params;
+    IndexOperationParams params;
     params.value_size = 4;
     params.value = new char[sizeof(int)];
     *((int *)params.value) = std::stoi(stmt->get_where_clause().get_predicates()[0].value);

@@ -1,17 +1,10 @@
 #pragma once
 
 #include <string>
+#include "IndexOperationParams.h"
 #include "../../backend/Page.h"
 //in make -I option is used, so we don't need to go a dir upper
 #include "TableMetadata.pb.h"
-
-struct HashOperationParams {
-  //<rid> (x2 ints) + indexed data
-  void * value;
-  unsigned page_id;
-  int slot_id;
-  size_t value_size;
-};
 
 // Format of files: 
 // ext_hash_<attr_names> - page with index context
@@ -27,20 +20,20 @@ public:
   ExtIndexManager(std::string const & table_dir);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);
 
-  int look_up_value(HashOperationParams * params);
-  bool insert_value(HashOperationParams const & params);
-  bool delete_value(HashOperationParams * params);
+  int look_up_value(IndexOperationParams * params);
+  bool insert_value(IndexOperationParams const & params);
+  bool delete_value(IndexOperationParams * params);
 
 #ifndef TEST_EXT_IND
 private: //methods
 #endif
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
-  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,HashOperationParams * params);
+  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,IndexOperationParams * params);
   static void init_buckets(std::string const & index_file_name, unsigned from, unsigned till, unsigned depth);
   bool bucket_has_free_slot(Page * bucket_id, unsigned record_size);
   void split_bucket(unsigned bucket_number, Page * page, unsigned record_size);
   void double_buckets_count();
-  unsigned compute_hash(HashOperationParams const & params);
+  unsigned compute_hash(IndexOperationParams const & params);
   unsigned get_bucket_id(unsigned bucket_ptr);
   void add_ptr_to_index_dir(unsigned bucket_id, unsigned total);
 
@@ -83,7 +76,7 @@ private: //vars and consts
 #include <iostream>
 
 void test_hash_computing() {
-  HashOperationParams params;
+  IndexOperationParams params;
   params.value_size = 5;
   char value_t[5] = {1, 0, 0, 0, 16};
   params.value = value_t;

@@ -5,9 +5,10 @@
 # EIM_DBG - is for Extendable index implementation
 # PAGE_D_DBG -- is for page directory for heap file
 # HFM_DBG -- heap file manager debug mode
+# BTREE_DBG -- btree index manager debug mode
 
 #D_KEY = -DDEBUG -DMAIN_DBG -DDBFACADE_DBG -DSQLPARSE_DBG -DEIM_DBG -DPAGE_D_DBG -DHFM_DBG
-D_KEY = -DDEBUG -DDBFACADE_DBG -DEIM_DBG -DHFM_DBG
+D_KEY = -DDEBUG -DDBFACADE_DBG -DBTREE_DBG
 COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
@@ -39,6 +40,7 @@ build_core: init build_common build_proto
 	g++ src/core/Filter.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/Filter.o
 	g++ src/core/DBFacade.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/DBFacade.o
 	g++ src/core/indices/ExtIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/ExtIndexManager.o
+	g++ src/core/indices/BTreeIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/BTreeIndexManager.o
 
 build_backend: init build_common
 	g++ src/backend/DiskManager.cpp $(COPTS) -c -o build/DiskManager.o
