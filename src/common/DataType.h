@@ -26,10 +26,10 @@ class DataType {
         }
       }
     }
-    TypeCode get_type_code() {
+    TypeCode get_type_code() const {
       return type_;
     }
-    size_t get_size() {
+    size_t get_size() const {
       return type_length_;
     }
     static DataType get_int() {
