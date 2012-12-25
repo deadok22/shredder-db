@@ -19,6 +19,12 @@ void Utils::critical_error() {
   exit(EXIT_FAILURE);
 }
 
+string Utils::get_table_name(string const & path) {
+  size_t found;
+  found = path.find_last_of("/\\");
+  return path.substr(found+1);
+}
+
 bool Utils::check_existence(string const & path, bool is_dir) {
   struct stat root_path_info;
   bool some_entry_exists = stat(path.c_str(), &root_path_info) == 0;
