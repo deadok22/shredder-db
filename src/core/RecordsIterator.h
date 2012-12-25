@@ -9,3 +9,12 @@ public:
   virtual unsigned record_page_id() = 0;
   virtual unsigned record_slot_id() = 0;
 };
+
+class EmptyIterator : public RecordsIterator {
+public:
+  bool next() { return false; }
+  void * operator*() { return NULL; }
+  ~EmptyIterator() {}
+  unsigned record_page_id() { return 0; }
+  unsigned record_slot_id() { return 0; }
+};

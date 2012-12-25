@@ -17,7 +17,7 @@
 
 class ExtIndexManager {
 public:
-  ExtIndexManager(std::string const & table_dir);
+  ExtIndexManager(std::string const & table_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);
 
   int look_up_value(IndexOperationParams * params);

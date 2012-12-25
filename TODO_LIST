@@ -3,4 +3,3 @@ Utils::log -- сделать логинг разноцветным
 BUGS:
 -- Before index creating che if table exists
 -- 'Pins' leak in hash index
--- 'Pins' leak in tree index

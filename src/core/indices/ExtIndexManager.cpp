@@ -85,7 +85,7 @@ int * ExtIndexManager::BucketPointersIterator::operator->() {
 ExtIndexManager::ExtIndexManager(std::string const & index_path): index_path_(index_path) {}
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
-  std::string path = InfoPool::get_instance().get_db_info().root_path + table_name;
+  std::string path = Utils::get_table_name(table_name);
   std::string index_file_name = path + "/ext_hash_" + ind_metadata.name();
   std::string directory_file_name = index_file_name + ExtIndexManager::DIR_SUFFIX;
   
@@ -117,7 +117,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   Utils::info("[EIM][Create index] Insert values into index... ");
 #endif
 
-  HeapFileManager::HeapRecordsIterator rec_itr(*t_metadata);
+  HeapFileManager::HeapRecordsIterator rec_itr(t_metadata->name());
   ExtIndexManager mock_manager(index_file_name);
   while (rec_itr.next()) {
     params.page_id = rec_itr.record_page_id();
