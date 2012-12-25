@@ -57,15 +57,15 @@ using namespace std;
 void test_replace()
 {
   BufferManager & bf = BufferManager::get_instance();
-  for( size_t i = 0; i != 11; ++i)
+  for( size_t i = 0; i != 10; ++i)
     bf.get_page(i, "file");
     
-  
+  bf.print_pinned_page();
 }
 
 int main() {
   DBInfo di;
-  di.root_path = "./";
+   
   
   di.max_page_cnt = 10;
   InfoPool::get_instance().set_db_info(di);
