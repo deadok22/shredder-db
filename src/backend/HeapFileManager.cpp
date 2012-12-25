@@ -175,7 +175,7 @@ void HeapFileManager::print_all_records(TableMetaData const & table) {
   HeapRecordsIterator records_itr(table);
   unsigned total = 0;
   while (records_itr.next()) {
-    print_record(table, (char *)records_itr.rec_data());
+    print_record(table, (char *)*records_itr);
     ++total;
   }
   std::cout << "Select finished. Total " << total << " records" << std::endl;
@@ -235,6 +235,6 @@ bool HeapFileManager::HeapRecordsIterator::next() {
 
 }
 
-unsigned HeapFileManager::HeapRecordsIterator::rec_page_id() { return page_itr_->get_pid(); }
-unsigned HeapFileManager::HeapRecordsIterator::rec_slot_id() { return current_slot_id_; }
-void * HeapFileManager::HeapRecordsIterator::rec_data() { return records_data_; }
+unsigned HeapFileManager::HeapRecordsIterator::record_page_id() { return page_itr_->get_pid(); }
+unsigned HeapFileManager::HeapRecordsIterator::record_slot_id() { return current_slot_id_; }
+void * HeapFileManager::HeapRecordsIterator::operator*() { return records_data_; }

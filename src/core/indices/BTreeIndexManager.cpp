@@ -63,9 +63,9 @@ void BTreeIndexManager::create_index(
   HeapFileManager::HeapRecordsIterator rec_itr(*t_metadata);
   BTreeIndexManager mock_manager(table_path, ind_metadata.name());
   while (rec_itr.next()) {
-    params.page_id = rec_itr.rec_page_id();
-    params.slot_id = rec_itr.rec_slot_id();
-    init_params_with_record(*t_metadata, ind_metadata, rec_itr.rec_data(), &params);
+    params.page_id = rec_itr.record_page_id();
+    params.slot_id = rec_itr.record_slot_id();
+    init_params_with_record(*t_metadata, ind_metadata, *rec_itr, &params);
     mock_manager.insert_value(params);
   }
 

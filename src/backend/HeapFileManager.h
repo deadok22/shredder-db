@@ -6,16 +6,17 @@
 #include "PagesDirectory.h"
 #include "../core/MetaDataProvider.h"
 #include "../core/Filter.h"
+#include "../core/RecordsIterator.h"
 
 class HeapFileManager {
 public://class
-  class HeapRecordsIterator {
+  class HeapRecordsIterator : public RecordsIterator {
   public:
     HeapRecordsIterator(TableMetaData const & table, Filter const & filter = Filter::ANY);
-    bool next();
-    unsigned rec_page_id();
-    unsigned rec_slot_id();
-    void * rec_data();
+    virtual bool next();
+    virtual unsigned record_page_id();
+    virtual unsigned record_slot_id();
+    virtual void * operator*();
   private:
     bool switch_page();
     TableMetaData const & t_meta_;
