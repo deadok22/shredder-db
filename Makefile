@@ -42,6 +42,7 @@ build_core: init build_common build_proto
 	g++ src/core/DBFacade.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/DBFacade.o
 	g++ src/core/indices/ExtIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/ExtIndexManager.o
 	g++ src/core/indices/BTreeIndexManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/BTreeIndexManager.o
+	g++ src/core/CsvPrinter.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/CsvPrinter.o
 
 build_backend: init build_common
 	g++ src/backend/DiskManager.cpp $(COPTS) -c -o build/DiskManager.o
