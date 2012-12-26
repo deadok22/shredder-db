@@ -32,14 +32,14 @@ RecordComparer::RecordComparisonRule::RecordComparisonRule(TableMetaData const &
 
 int RecordComparer::RecordComparisonRule::apply(int const * a, int const * b) const {
   if (*a == *b) {
-    return true;
+    return 0;
   }
   return *a < *b && !is_descending_ ? 1 : -1;
 }
 
 int RecordComparer::RecordComparisonRule::apply(double const * a, double const * b) const {
   if (*a == *b) {
-    return true;
+    return 0;
   }
   return *a < *b && !is_descending_ ? 1 : -1;
 }
@@ -47,7 +47,7 @@ int RecordComparer::RecordComparisonRule::apply(double const * a, double const *
 int RecordComparer::RecordComparisonRule::apply(char const * a, char const * b) const {
   int result = strncmp(a, b, data_type_.get_size() - 1);
   if (0 == result) {
-    return true;
+    return 0;
   }
   return result < 0 && !is_descending_ ? 1 : -1;
 }

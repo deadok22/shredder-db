@@ -5,14 +5,13 @@
 #include "Page.h"
 #include "PagesDirectory.h"
 #include "../core/MetaDataProvider.h"
-#include "../core/Filter.h"
 #include "../core/RecordsIterator.h"
 
 class HeapFileManager {
 public://class
   class HeapRecordsIterator : public RecordsIterator {
   public:
-    HeapRecordsIterator(std::string const & table_name, Filter const & filter = Filter::ANY);
+    HeapRecordsIterator(std::string const & table_name);
     virtual ~HeapRecordsIterator();
     virtual bool next();
     virtual unsigned record_page_id();
@@ -21,7 +20,6 @@ public://class
   private:
     bool switch_page();
     TableMetaData * t_meta_;
-    Filter const & filter_;
 
     char * records_data_;
     char * page_data_;
