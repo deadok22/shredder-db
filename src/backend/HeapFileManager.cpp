@@ -98,7 +98,82 @@ int HeapFileManager::take_free_slot(char * page_data) {
   }
 }
 
-bool HeapFileManager::process_delete_record(/* TODO */) { return false;}
+bool HeapFileManager::process_delete_record(TableMetaData const & table, unsigned page_id, unsigned slot_number) {
+  PagesDirectory pd(get_heap_file_name(table.name()));  
+  BufferManager &bm = BufferManager::get_instance();
+  Page &req_page = bm.get_page(page_id, get_heap_file_name(table.name()));
+  char * data = req_page.get_data(false);
+// ???? check
+  *(data + slot_number / 8)  &= (0xFF - (1 << (7-slot_number % 8) ) ); 
+  
+  req_page.unpin();
+#ifdef HFM_DBG
+  Utils::info("[HeapFileManager] Delete record finished. Unpin page #" + std::to_string(req_page.get_pid()));
+#endif  
+  pd.decrement_records_count(req_page.get_pid());
+  return true;
+}
+
+bool HeapFileManager::process_update_record(
+  TableMetaData const & table,
+  unsigned page_id, unsigned slot_number,
+  std::vector<std::string> const & column_names,
+  std::vector<std::string> const & column_values) {
+
+  std::map<std::string, std::string> name_to_value;
+  for (unsigned i = 0; i < column_names.size(); ++i) {
+    name_to_value[column_names[i]] = column_values[i];
+  }
+
+  BufferManager &bm = BufferManager::get_instance();
+  Page & page =  bm.get_page(page_id, get_heap_file_name(table.name()));
+  char * page_data = page.get_data(false);
+
+#ifdef HFM_DBG
+  Utils::info("[HeapFileManager] Record slot for update is " + std::to_string(slot_number) +
+     ". Table: " + table.name() + "; PageId: " + std::to_string(page_id));
+#endif
+  page_data += slot_number * table.record_size() + table.space_for_bit_mask();
+  
+  //update values in order
+  int offset = 0;
+  for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
+    std::string attr_name = table.attribute(attr_ind).name();
+    int attr_size = table.attribute(attr_ind).size();
+
+    switch ((TypeCode)table.attribute(attr_ind).type_name()) {
+      case INT: {
+          if( name_to_value.count(attr_name) ) {
+            *((int *)(page_data + offset)) = std::stoi(name_to_value[attr_name]);
+          }
+        }
+        break;
+      case DOUBLE: {
+          if( name_to_value.count(attr_name) ) {
+            *((double *)(page_data + offset)) = std::stod(name_to_value[attr_name]);
+          }
+        }
+        break;
+      case VARCHAR: {
+          if( name_to_value.count(attr_name) ) {
+            memset(page_data + offset, '\0', attr_size);
+            memcpy(page_data + offset, name_to_value[attr_name].c_str(), attr_size);
+            *(page_data + offset + attr_size) = '\0';
+          }
+        }
+        break;
+    }
+
+    offset += attr_size;
+  }
+
+  page.unpin();   //relese ASAP
+#ifdef HFM_DBG
+  Utils::info("[HeapFileManager] Update finished. Unpin page #" + std::to_string(page.get_pid()));
+#endif
+  
+  return true;
+}
 
 void HeapFileManager::print_record(TableMetaData const & table, char * page_data) {
   int offset = 0;

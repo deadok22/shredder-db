@@ -192,3 +192,13 @@ class InsertStatement : public TableTargetedStatement {
     std::vector<std::string> column_names_;
     std::vector<std::string> values_;
 };
+//TODO
+class UpdateStatement : public TableTargetedStatement {
+
+
+};
+//TODO
+class DeleteStatement : public TableTargetedStatement {
+
+
+};

@@ -37,7 +37,16 @@ public:
     std::vector<std::string> const & column_names,
     std::vector<std::string> const & column_values);
 
-  bool process_delete_record(/* TODO */);
+  bool process_update_record(
+  TableMetaData const & table,
+  unsigned page_id, unsigned slot_number,
+  std::vector<std::string> const & column_names,
+  std::vector<std::string> const & column_values);
+
+  bool process_delete_record(
+  TableMetaData const & table,
+  unsigned page_id, unsigned slot_number);
+  
   void print_all_records(TableMetaData const & table);
 
   //returns a pointer to data related to a given record. If there is no such recprd returns NULL

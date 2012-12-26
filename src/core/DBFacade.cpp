@@ -36,10 +36,10 @@ void DBFacade::execute_statement(SqlStatement const * stmt) {
       execute_statement((CreateIndexStatement const *) stmt);
       break;
     case UPDATE:
-      //TODO IMPL;
+      //execute_statement((UpdateStatement const *) stmt);
       break;
     case DELETE:
-      //TODO IMPL;
+      //execute_statement((DeleteStatement const *) stmt);
       break;
     case UNKNOWN:
       Utils::warning("[DBF] Given statement is unknown");
@@ -159,7 +159,51 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   cout << "Insert OK" << std::endl;
   delete metadata;
 }
+/*
+void DBFacade::execute_statement(UpdateStatement const * stmt) {
+  HeapFileManager &hfm = HeapFileManager::get_instance();  
+  TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
+  if (metadata == NULL) {
+#ifdef DBFACADE_DBG
+    Utils::error("[DBFacade][Update stmt] Table " + stmt->get_table_name() + " doesn't exist");
+#endif
+    return;
+  }
+
+  std::vector<WhereClause::Predicate> conds = stmt->get_where_clause().get_predicates();
+  RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
+
+  while (rec_itr->next()) {
+    hfm.process_update_record(*metadata, res_itr->record_page_id(), rec_itr->record_slot_id(), stmt->get_column_names(), stmt->get_values());
+  }
+
+  delete rec_itr;
+  delete metadata;
+}
+
+void DBFacade::execute_statement(DeleteStatement const * stmt) {
+  HeapFileManager &hfm = HeapFileManager::get_instance();  
+  TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
+
+  if (metadata == NULL) {
+#ifdef DBFACADE_DBG
+    Utils::error("[DBFacade][Delete stmt] Table " + stmt->get_table_name() + " doesn't exist");
+#endif
+    return;
+  }
+
+  std::vector<WhereClause::Predicate> conds = stmt->get_where_clause().get_predicates();
+  RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
+
+  while (rec_itr->next()) {
+    hfm.process_delete_record(*metadata, res_itr->record_page_id(), rec_itr->record_slot_id());
+  }
+
+  delete rec_itr;
+  delete metadata;
+}
+*/
 void DBFacade::create_empty_file(std::string const & fname) {
   std::fstream output(fname.c_str(), ios::out | ios::trunc);
   output.close();

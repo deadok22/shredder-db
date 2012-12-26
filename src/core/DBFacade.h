@@ -11,6 +11,8 @@ public:
   void execute_statement(SelectStatement const *);
   void execute_statement(InsertStatement const *);
   void execute_statement(CreateIndexStatement const *);
+  void execute_statement(DeleteStatement const *);
+  void execute_statement(UpdateStatement const *);
 
 private:
   static DBFacade * instance_;
