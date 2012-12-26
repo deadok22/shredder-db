@@ -26,14 +26,12 @@ BufferManager::~BufferManager() {
 }
 
 void BufferManager::print_pinned_page() {
-#ifdef IO_BUFF_M
-  Utils::log("[BufferManager] print pinned page:");
+  std::cout << "[BufferManager] print pinned page:" << std::endl;
   for(vector<Page*>::iterator i = buffer_.begin(), e = buffer_.end(); i != e; ++i){
     if( !(*i)->is_unpinned() ){      
       std::cout << "page_id: "<< std::to_string((*i)->get_pid()) << "; table_name: " << Utils::get_table_name((*i)->get_fname()) << std::endl;
     }
   } 
-#endif
 }
 
 void BufferManager::purge() {

@@ -87,6 +87,7 @@ void repl() {
     } else if (fst_token.compare("BMST") == 0) {
       std::cout << "BufferManager state:" << std::endl;
       std::cout << "  Pinned pages: " + std::to_string(BufferManager::get_instance().get_pinned_page_count()) << std::endl;
+      BufferManager::get_instance().print_pinned_page();
     } else if (fst_token.compare("ABOUT") == 0) {
       std::string table_name = command.substr(6);
 #ifdef MAIN_DBG

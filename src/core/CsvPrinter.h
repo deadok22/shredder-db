@@ -2,6 +2,7 @@
 #include "TableMetadata.pb.h"
 #include "MetaDataProvider.h"
 #include "../common/DataType.h"
+#include "../common/Utils.h"
 #include <string>
 #include <sstream>
 #include <iostream>

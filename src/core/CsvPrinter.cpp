@@ -12,6 +12,9 @@ CsvPrinter & CsvPrinter::get_instance() {
 }
 
 string CsvPrinter::get_header_csv(TableMetaData const & table) { 
+#ifdef CSVPRINTER_DBG  
+  Utils::info("[CsvPrinter] get csv_header_string");
+#endif    
   stringstream record;
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind != end; ++attr_ind) {
     record << table.attribute(attr_ind).name();
@@ -40,6 +43,9 @@ string CsvPrinter::get_header_csv(TableMetaData const & table) {
 
 
 string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table) { 
+#ifdef CSVPRINTER_DBG
+  Utils::info("[CsvPrinter] get csv_string");  
+#endif
   stringstream record;
   int offset = 0;
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind < end; ++attr_ind) {
