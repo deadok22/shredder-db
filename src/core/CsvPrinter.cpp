@@ -40,7 +40,7 @@ string CsvPrinter::get_header_csv( string const & table_name ) {
   return record.str();
 }
 
-string CsvPrinter::get_csv( RecordsIterator const& rec_iter, string const & table_name ) { 
+string CsvPrinter::get_csv( RecordsIterator * rec_iter, string const & table_name ) { 
   TableMetaData &table = *(MetaDataProvider::get_instance()->get_meta_data(table_name));
 
   stringstream record;
@@ -49,7 +49,7 @@ string CsvPrinter::get_csv( RecordsIterator const& rec_iter, string const & tabl
     int attr_size = table.attribute(attr_ind).size();
 
     char char_attr_value[attr_size + 1];
-    memcpy(char_attr_value, (char*)(*rec_iter) + offset, attr_size);
+    memcpy(char_attr_value, (char*)(**rec_iter) + offset, attr_size);
     switch ((TypeCode)table.attribute(attr_ind).type_name()) {
       case INT: {
           int value = *((int *)char_attr_value);

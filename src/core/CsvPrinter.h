@@ -13,7 +13,7 @@ using std::string;
 class CsvPrinter {
 public:
   static CsvPrinter & get_instance();
-  string get_csv( RecordsIterator const& rec_iter, string const & table_name );
+  string get_csv( RecordsIterator * rec_iter, string const & table_name );
   string get_header_csv( string const & table_name );
 
 private:
