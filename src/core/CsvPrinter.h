@@ -12,8 +12,8 @@ using std::string;
 class CsvPrinter {
 public:
   static CsvPrinter & get_instance();
-  string get_csv(void const * record_data, string const & table_name );
-  string get_header_csv( string const & table_name );
+  string get_csv(void const * record_data, TableMetaData const & table);
+  string get_header_csv(TableMetaData const & table);
 
 private:
   const char DELIM; 

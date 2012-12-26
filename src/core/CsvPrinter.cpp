@@ -11,9 +11,7 @@ CsvPrinter & CsvPrinter::get_instance() {
   return csv_p;
 }
 
-string CsvPrinter::get_header_csv( string const & table_name ) { 
-  TableMetaData &table = *(MetaDataProvider::get_instance()->get_meta_data(table_name));
-  
+string CsvPrinter::get_header_csv(TableMetaData const & table) { 
   stringstream record;
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind != end; ++attr_ind) {
     record << table.attribute(attr_ind).name();
@@ -40,9 +38,7 @@ string CsvPrinter::get_header_csv( string const & table_name ) {
   return record.str();
 }
 
-string CsvPrinter::get_csv(void const * record_data, string const & table_name ) { 
-  TableMetaData &table = *(MetaDataProvider::get_instance()->get_meta_data(table_name));
-
+string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table) { 
   stringstream record;
   int offset = 0;
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind < end; ++attr_ind) {

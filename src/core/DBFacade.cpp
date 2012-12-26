@@ -133,9 +133,9 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   std::vector<WhereClause::Predicate> conds = stmt->has_where_clause() ? stmt->get_where_clause().get_predicates() : vector<WhereClause::Predicate>();
   RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
 
-  std::cout << CsvPrinter::get_instance().get_header_csv(metadata->name());
+  std::cout << CsvPrinter::get_instance().get_header_csv(*metadata);
   while (rec_itr->next()) {
-    std::cout << CsvPrinter::get_instance().get_csv(**rec_itr, metadata->name());
+    std::cout << CsvPrinter::get_instance().get_csv(**rec_itr, *metadata);
   }
 
   delete rec_itr;
