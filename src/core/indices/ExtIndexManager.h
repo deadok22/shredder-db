@@ -6,6 +6,7 @@
 //in make -I option is used, so we don't need to go a dir upper
 #include "TableMetadata.pb.h"
 #include "IndexManager.h"
+#include "../RecordsIterator.h"
 
 // Format of files: 
 // ext_hash_<attr_names> - page with index context
@@ -17,6 +18,31 @@
 
 
 class ExtIndexManager : public IndexManager {
+public:
+  class BucketIterator : public RecordsIterator {
+  public:
+    BucketIterator(
+      std::string const & table_name,
+      std::string const & index_name,
+      char * init_key, unsigned key_size);
+
+    virtual ~BucketIterator();
+    
+    virtual bool next();
+    virtual void * operator*();
+    virtual unsigned record_page_id();
+    virtual unsigned record_slot_id();
+  private:
+    ExtIndexManager * btm_;
+
+    Page * current_page_;
+    TableMetaData *t_metadata_;
+    unsigned page_offset_;
+    unsigned records_to_go_;
+    unsigned key_size_;
+    char * init_key_;
+    char * record_data_;
+  };
 public:
   ExtIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);

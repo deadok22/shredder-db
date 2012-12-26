@@ -64,7 +64,6 @@ bool ExtIndexManager::BucketPointersIterator::next() {
     records_to_go_ = is_init_mode_ ? (Page::PAGE_SIZE / sizeof(int)) - 1 : *((int *)current_page_->get_data());
     offset_ = 1;   
   }
-
   ++current_hash_;
   return true;
 }
@@ -86,7 +85,7 @@ ExtIndexManager::ExtIndexManager(std::string const & table_name, std::string con
  index_path_(Utils::get_table_dir(table_name) + "/ext_hash_" + index_name) {}
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
-  std::string path = Utils::get_table_name(table_name);
+  std::string path = Utils::get_table_dir(table_name);
   std::string index_file_name = path + "/ext_hash_" + ind_metadata.name();
   std::string directory_file_name = index_file_name + ExtIndexManager::DIR_SUFFIX;
   
@@ -99,8 +98,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   BufferManager &bm = BufferManager::get_instance();
   Page &fst_dir_page = bm.get_page(0, directory_file_name);
   //markup directory
-  char * page_data = fst_dir_page.get_data(false);
-  *((int *)page_data) = ExtIndexManager::INIT_BUCKET_DEPTH;
+  *((unsigned *)fst_dir_page.get_data(false)) = ExtIndexManager::INIT_BUCKET_DEPTH;
   fst_dir_page.unpin();
 
   BucketPointersIterator bpi(directory_file_name, true);
@@ -112,7 +110,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
 
   IndexOperationParams params;
   params.value_size = IndexManager::compute_key_size(*t_metadata, ind_metadata);
-  params.value = new char[params.value_size];
+  params.value = new char[params.value_size]();
 #ifdef EIM_DBG
   Utils::info("[EIM][Create index] Key size was determined to be " + std::to_string(params.value_size));
   Utils::info("[EIM][Create index] Insert values into index... ");
@@ -160,7 +158,7 @@ int ExtIndexManager::look_up_value(IndexOperationParams * params) {
     data += (RECORD_ID_SIZE + params->value_size);
     ++bucket_record_index;
   }
-
+  page.unpin();
   return bucket_record_index == occupied ? -1 : bucket_record_index;
 }
 
@@ -301,11 +299,12 @@ bool ExtIndexManager::bucket_has_free_slot(Page * page, unsigned record_size) {
 }
 
 unsigned ExtIndexManager::get_bucket_id(unsigned hash) {  
-  std::string directory_file_name = index_path_ + ExtIndexManager::DIR_SUFFIX;
   BufferManager &bm = BufferManager::get_instance();
-  Page &fst_dir_page = bm.get_page(0, directory_file_name);
+  Page &fst_dir_page = bm.get_page(0, index_path_ + DIR_SUFFIX);
+  unsigned global_depth = *((int *)fst_dir_page.get_data());
+  fst_dir_page.unpin();
 
-  unsigned mask = (1 << *((int *)fst_dir_page.get_data())) - 1;
+  unsigned mask = (1 << global_depth) - 1;
   unsigned ptr_number = hash & mask;
 
   //One int is for ptr on page count
@@ -320,8 +319,10 @@ unsigned ExtIndexManager::get_bucket_id(unsigned hash) {
   Utils::info("  [EIM][Calc bucket id] Ptr page: " + std::to_string(ptr_page) + "; ptr offset: " + std::to_string(ptr_offset));
 #endif
 
-  Page &req_page = BufferManager::get_instance().get_page(ptr_page, directory_file_name);
-  return *((unsigned *)req_page.get_data() + ptr_offset);
+  Page &req_page = BufferManager::get_instance().get_page(ptr_page, index_path_ + ExtIndexManager::DIR_SUFFIX);
+  unsigned bucket_id = *((unsigned *)req_page.get_data() + ptr_offset);
+  req_page.unpin();
+  return bucket_id;
 }
 
 void ExtIndexManager::init_buckets(std::string const & index_file_name, unsigned from, unsigned till, unsigned depth) {
@@ -354,3 +355,62 @@ unsigned ExtIndexManager::compute_hash(IndexOperationParams const & params) {
 #endif
   return base;
 }
+
+//-----------------------------------------------------------------------------
+// ExtIndexIterator
+
+ExtIndexManager::BucketIterator::BucketIterator(
+  std::string const & table_name, std::string const & index_name, char * init_key, unsigned key_size):
+  current_page_(NULL), t_metadata_(NULL), page_offset_(0), records_to_go_(0),
+  key_size_(key_size), init_key_(init_key), record_data_(NULL) {
+
+  ExtIndexManager mgr(table_name, index_name);
+  IndexOperationParams params;
+  params.value = init_key;
+  params.value_size = key_size;
+
+  unsigned bucket_ind = mgr.get_bucket_id(mgr.compute_hash(params));
+  current_page_ = &BufferManager::get_instance().get_page(bucket_ind, mgr.index_path_);
+  page_offset_ = 0;
+  records_to_go_ = *((unsigned *)current_page_->get_data() + 1);
+  t_metadata_ = MetaDataProvider::get_instance()->get_meta_data(table_name);
+}
+
+ExtIndexManager::BucketIterator::~BucketIterator() {
+  if (current_page_ != NULL) { current_page_->unpin(); }
+  delete [] init_key_;
+  delete t_metadata_;
+  if (record_data_ != NULL) { delete [] (char *)record_data_; }
+}
+
+bool ExtIndexManager::BucketIterator::next() {
+  if (record_data_ != NULL) {
+    delete [] (char *)record_data_;
+    record_data_ = NULL;
+  }
+  if (records_to_go_ == 0) { return false;}
+
+  --records_to_go_;
+  if (page_offset_ == 0) {
+    page_offset_ = PAGE_AUX_DATA_SIZE;
+  } else {
+    page_offset_ += RECORD_ID_SIZE + key_size_;
+  }
+  return true;
+}
+
+void * ExtIndexManager::BucketIterator::operator*() {
+  if (record_data_ == NULL) {
+    record_data_ = (char *)HeapFileManager::get_instance().get_record(*t_metadata_, this->record_page_id(), this->record_slot_id());
+  }
+  return record_data_;
+}
+
+unsigned ExtIndexManager::BucketIterator::record_page_id() {
+  return *(current_page_->get_data() + page_offset_);
+}
+
+unsigned ExtIndexManager::BucketIterator::record_slot_id() {
+  return *(current_page_->get_data() + page_offset_ + sizeof(int));
+}
+

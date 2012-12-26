@@ -3,6 +3,7 @@
 
 #include "../backend/HeapFileManager.h"
 #include "indices/BTreeIndexManager.h"
+#include "indices/ExtIndexManager.h"
 #include "FilteringIterator.h"
 #include "RecordComparer.h"
 
@@ -113,9 +114,8 @@ RecordsIterator * QueryPlanner::handle_query_using_index(TableMetaData const & t
       //ind_ctx.sample_record will be deleted by iterator
     }
   } else {
-    //TODO Hash here
-    iterator = new HeapFileManager::HeapRecordsIterator(table.name());
-    if (ind_ctx.sample_record != NULL) { delete [] ind_ctx.sample_record; }
+    iterator = new ExtIndexManager::BucketIterator(table.name(), index_name, ind_ctx.sample_record, table.record_size());
+     //ind_ctx.sample_record will be deleted by iterator
   }
   delete ind_ctx.cmp;
 
@@ -123,6 +123,7 @@ RecordsIterator * QueryPlanner::handle_query_using_index(TableMetaData const & t
 
   SampleRecordCtx ctx;
   init_sample_record(table, predicat, &ctx);
+
   return new FilteringIterator(iterator, ctx.cmp, predicat.type, ctx.sample_record, is_btree ? ALLOWED_FILTER_MISS : -1);
 }
 
@@ -131,7 +132,7 @@ void QueryPlanner::init_sample_record(TableMetaData const &table, WhereClause::P
   rules.push_back(predicat.column);
   RecordComparer * cmp = new RecordComparer(table, rules);
 
-  char * sample_record = new char[table.record_size()];
+  char * sample_record = new char[table.record_size()]();
   unsigned offset = 0;
   for (attr_const_iter i = table.attribute().begin(); i != table.attribute().end(); ++i) {
     if (i->name() == predicat.column) {
