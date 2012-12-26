@@ -11,7 +11,8 @@ enum SqlStatementType {
   INSERT = 3,
   UPDATE = 4,
   DELETE = 5,
-  SELECT = 6
+  SELECT = 6,
+  DROP   = 7
 };
 
 class SqlStatement {
@@ -68,7 +69,6 @@ class CreateTableStatement : public TableTargetedStatement {
   private:
     std::vector<TableColumn> columns_;
 };
-
 
 class CreateIndexStatement : public TableTargetedStatement {
   public:
@@ -142,6 +142,28 @@ private:
   std::vector<WhereClause::Predicate> predicates_;
 };
 
+//TODO create a supertype with where clause.
+
+class DeleteStatement : public TableTargetedStatement {
+  public:
+    DeleteStatement(std::string const & table_name, WhereClause const & where = WhereClause())
+      : TableTargetedStatement(DELETE, table_name),
+        where_clause_(where) {}
+    
+    WhereClause const & get_where_clause() const {
+      return where_clause_;
+    }
+    
+    bool has_where_clause() const {
+      return !where_clause_.is_empty();
+    }
+    
+    virtual ~DeleteStatement() {}
+    
+  private:
+    WhereClause where_clause_;
+};
+
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {
   public:
@@ -198,7 +220,7 @@ class UpdateStatement : public TableTargetedStatement {
 
 };
 //TODO
-class DeleteStatement : public TableTargetedStatement {
+class DropStatement : public TableTargetedStatement {
 
 
 };

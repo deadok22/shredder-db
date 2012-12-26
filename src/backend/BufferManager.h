@@ -7,9 +7,8 @@
 #include "../common/Utils.h"
 #include "../common/InfoPool.h"
 
-class Page;
-class DiskManager;
 using std::vector;
+using std::string;
 
 class BufferManager
 {
@@ -19,6 +18,7 @@ public:
   Page& get_page(size_t page_id,string const& fname);
   void purge();
   void force();
+  void force(string const & table_name);
 
   //for debug
   void print_pinned_page();

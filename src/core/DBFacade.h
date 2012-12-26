@@ -13,6 +13,7 @@ public:
   void execute_statement(CreateIndexStatement const *);
   void execute_statement(DeleteStatement const *);
   void execute_statement(UpdateStatement const *);
+  void execute_statement(DropStatement const *);
 
 private:
   static DBFacade * instance_;

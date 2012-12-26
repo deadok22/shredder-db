@@ -55,6 +55,22 @@ void BufferManager::force() {
   }
 }
 
+void BufferManager::force(string const & table_name) {
+#ifdef IO_BUFF_M 
+  Utils::log("[BufferManager] force pages of dir_name: " + table_name);
+#endif
+  size_t st_dir = InfoPool::get_instance().get_db_info().root_path.size();
+
+  for(vector<Page*>::iterator i = buffer_.begin(), e = buffer_.end(); i != e;++i){
+    string fname = (*i)->get_fname();   
+    if( fname.substr(st_dir, table_name.size()).compare(table_name) == 0){    
+      if( !(*i)->is_unpinned()) {
+        Utils::log("[BufferManager] page is not unpinned",ERROR);
+      }
+      disk_mng_.write_page(*i);
+    }
+  }
+}
 
 Page& BufferManager::get_page(size_t page_id,string const& fname) {
 #ifdef IO_BUFF_M 

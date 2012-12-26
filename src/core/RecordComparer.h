@@ -15,8 +15,8 @@ public:
       bool is_descending;
   };
 public:
-  RecordComparer(TableMetaData const & tmd, std::vector<RecordComparer::ComparisonRule> const & comparison_rules);
   RecordComparer(TableMetaData const & tmd, std::string const & index_name);
+  RecordComparer(TableMetaData const & tmd, std::vector<RecordComparer::ComparisonRule> const & comparison_rules);
   int compare(void const * data1, void const * data2) const;
 private:
   class RecordComparisonRule {

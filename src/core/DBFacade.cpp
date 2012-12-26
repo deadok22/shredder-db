@@ -1,5 +1,6 @@
 #include <string>
 #include <fstream>
+#include <cstdlib>
 
 #include "MetaDataProvider.h"
 #include "DBFacade.h"
@@ -7,6 +8,7 @@
 #include "../common/InfoPool.h" 
 #include "../backend/PagesDirectory.h"
 #include "../backend/HeapFileManager.h"
+#include "../backend/BufferManager.h"
 #include "QueryPlanner.h"
 
 #include "indices/IndexManager.h"
@@ -43,6 +45,9 @@ void DBFacade::execute_statement(SqlStatement const * stmt) {
       break;
     case DELETE:
       //execute_statement((DeleteStatement const *) stmt);
+      break;
+    case DROP:
+      execute_statement((DropStatement const *) stmt);  
       break;
     case UNKNOWN:
       Utils::warning("[DBF] Given statement is unknown");
@@ -151,9 +156,7 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
-#ifdef DBFACADE_DBG
     Utils::error("[DBFacade][Insert stmt] Table " + stmt->get_table_name() + " doesn't exist");
-#endif
     return;
   }
 
@@ -235,6 +238,19 @@ void DBFacade::execute_statement(DeleteStatement const * stmt) {
   delete rec_itr;
 }
 */
+
+void DBFacade::execute_statement(DropStatement const * stmt) {
+  BufferManager &bm = BufferManager::get_instance();
+  std::string table_dir = Utils::get_table_dir(stmt->get_table_name());
+  if( Utils::check_existence(table_dir, true) ) {
+    bm.force(stmt->get_table_name());
+    string cmd = "rm -r " + table_dir;    
+    system(cmd.c_str());
+  } else {
+    Utils::error("[DBFacade][Drop stmt] Table " + stmt->get_table_name() + " doesn't exist");
+  }  
+}
+
 void DBFacade::create_empty_file(std::string const & fname) {
   std::fstream output(fname.c_str(), ios::out | ios::trunc);
   output.close();

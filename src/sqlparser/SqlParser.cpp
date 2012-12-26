@@ -17,6 +17,9 @@ static const boost::regex CREATE_TABLE_START_REGEX(CREATE_TABLE_START_REGEX_TEXT
 static const std::string INSERT_START_REGEX_TEXT("^\\s*INSERT\\s+INTO\\s+.*$");
 static const boost::regex INSERT_START_REGEX(INSERT_START_REGEX_TEXT, boost::regex_constants::icase);
 
+static const std::string DELETE_START_REGEX_TEXT("^\\s*DELETE\\s+FROM\\s+.*$");
+static const boost::regex DELETE_START_REGEX(DELETE_START_REGEX_TEXT, boost::regex_constants::icase);
+
 /*
  * Utility constants
  */
@@ -67,8 +70,7 @@ SqlStatement const * SqlParser::parse(std::string const & statement_text) const 
       break;
     }
     case DELETE : {
-      //TODO implement
-      Utils::error("[SqlParser] DELETE parser is not implemented yet");
+      parsedStatement = parse_delete_statement(statement_text);
       break;
     }
     case UNKNOWN : {
@@ -113,6 +115,12 @@ SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement
     Utils::info("[SqlParser] the statement is CREATE [UNIQUE] INDEX");
 #endif
     return CREATE_INDEX;
+  }
+  if (boost::regex_match(statement_text, DELETE_START_REGEX)) {
+#ifdef SQLPARSE_DBG
+    Utils::info("[SqlParser] the statement is DELETE");
+    return DELETE;
+#endif
   }
   //TODO add more statement types
   Utils::warning("[SqlParser] the statement is not recognized");
@@ -233,6 +241,33 @@ SqlStatement const * SqlParser::parse_select_statement(std::string const & state
   }
   
   return new SelectStatement(table_match.str(), parse_comma_separated_values(what_match.str()), where_clause);
+}
+
+SqlStatement const * SqlParser::parse_delete_statement(std::string const & statement_text) const {
+  static const std::string DELETE_REGEX_TEXT
+        = "^\\s*DELETE\\s+FROM\\s+(?'TABLE'\\w+)(?:\\s+"
+          + WHERE_CLAUSE_REGEX_TEXT + ")?\\s*$";
+  static const boost::regex DELETE_REGEX(DELETE_REGEX_TEXT, boost::regex_constants::icase);
+#ifdef SQLPARSE_DBG
+  Utils::info("[SqlParser] parsing DELETE statement");
+#endif
+  boost::smatch match_results;
+  if (!boost::regex_match(statement_text, match_results, DELETE_REGEX)) {
+    Utils::warning("[SqlParser] invalid DELETE statement syntax");
+    return new UnknownStatement();
+  }
+  
+  std::string table_name = match_results["TABLE"].str();
+  WhereClause where_clause;
+  if ("" != match_results["WHERE"].str()) {
+    where_clause = parse_where_clause(match_results["WHERE"].str());
+    if (where_clause.is_empty()) {
+      Utils::warning("[SqlParser] invalid DELETE statement syntax: bad WHERE clause");
+      return new UnknownStatement();
+    }
+  }
+  
+  return new DeleteStatement(table_name, where_clause);
 }
 
 std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {

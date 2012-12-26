@@ -17,6 +17,7 @@ class SqlParser {
     SqlStatement const * parse_create_index_statement(std::string const & statement_text) const;
     SqlStatement const * parse_insert_statement(std::string const & statement_text) const;
     SqlStatement const * parse_select_statement(std::string const & statement_text) const;
+    SqlStatement const * parse_delete_statement(std::string const & statement_text) const;
     std::vector<std::string> parse_comma_separated_values(std::string const & values_string) const;
     std::vector<TableColumn> parse_table_columns(std::string const & columns_string) const;
     std::vector<CreateIndexStatement::Column> parse_create_index_columns(std::string const & columns_string) const;
@@ -40,5 +41,8 @@ int main() {
   
   delete parser.parse("CREATE INDEX my_index ON my_table(a, b DESC, c ASC) USING BTREE");
   delete parser.parse("CREATE UNIQUE INDEX my_index ON my_table(a ASC) USING HASH");
+  
+  delete parser.parse("DELETE FROM table_name   ");
+  delete parser.parse("DELETE FROM table_name WHERE a < 10");
 }
 #endif
