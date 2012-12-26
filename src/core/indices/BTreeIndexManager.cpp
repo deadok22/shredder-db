@@ -38,7 +38,7 @@ void BTreeIndexManager::create_index(
 
   TableMetaData * t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
 
-  size_t key_size = compute_key_size(*t_metadata, ind_metadata);
+  size_t key_size = IndexManager::compute_key_size(*t_metadata, ind_metadata);
   char * page_data = meta_page.get_data(false);
   *((unsigned *)page_data) = 1; //root ptr
   *((unsigned *)page_data + 1) = key_size; //key size
@@ -65,42 +65,13 @@ void BTreeIndexManager::create_index(
   while (rec_itr.next()) {
     params.page_id = rec_itr.record_page_id();
     params.slot_id = rec_itr.record_slot_id();
-    init_params_with_record(*t_metadata, ind_metadata, *rec_itr, &params);
+    IndexManager::init_params_with_record(*t_metadata, ind_metadata, *rec_itr, &params);
     mock_manager.insert_value(params);
   }
 
   delete [] (char *)params.value;
   delete t_metadata;
 }
-
-//TODO remove coypa ste
-void BTreeIndexManager::init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, IndexOperationParams * params) {
-  size_t rec_offset = 0;
-  size_t key_offset = 0;
-  for (int i = 0; i < i_meta.keys_size(); ++i) {
-    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
-      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
-        memcpy((char *)params->value + key_offset, (char *)rec_data + rec_offset, t_meta.attribute(attr_i).size());
-        key_offset += t_meta.attribute(attr_i).size();
-      }
-      rec_offset += t_meta.attribute(attr_i).size();
-    }
-  }
-}
-
-size_t BTreeIndexManager::compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta) {
-  size_t key_size = 0;
-  for (int i = 0; i < i_meta.keys_size(); ++i) {
-    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
-      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
-        key_size += t_meta.attribute(attr_i).size();
-        break;
-      }
-    }
-  }
-  return key_size;
-}
-
 
 int BTreeIndexManager::look_up_value(IndexOperationParams * params) {
   int leaf_index = tree_search(get_root_node(), params);
@@ -116,6 +87,7 @@ int BTreeIndexManager::look_up_value(IndexOperationParams * params) {
   unsigned ret_value = -1;
   if (ins_index != 0) {
     char * record = data + ins_index * entry_size + DATA_PAGE_HEADER_SIZE; 
+//CMP_HERE!!!
     //TODO fix with comparator
     if (*((int *)(record + RECORD_ID_SIZE)) == *((int *)params->value)) {
       params->page_id = *((unsigned *)record);
@@ -392,7 +364,7 @@ unsigned BTreeIndexManager::find_offset_for_storage(char * data, unsigned aux_re
   while (record_index < records_count) {
     char *key_data = data + aux_record_data_size;
     //NB can be enhanced with binary search
-    //TODO repalace
+//CMP_HERE!!!    //TODO repalace
     if (*((int *)key_data) >= *((int *)params.value)) { break; }
     data += aux_record_data_size + params.value_size;
     ++record_index;
