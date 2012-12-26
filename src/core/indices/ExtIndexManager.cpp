@@ -82,7 +82,8 @@ int * ExtIndexManager::BucketPointersIterator::operator->() {
 //-----------------------------------------------------------------------------
 // ExtIndetManager implementation
 
-ExtIndexManager::ExtIndexManager(std::string const & index_path): index_path_(index_path) {}
+ExtIndexManager::ExtIndexManager(std::string const & table_name, std::string const & index_name):
+ index_path_(Utils::get_table_dir(table_name) + "/ext_hash_" + index_name) {}
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
   std::string path = Utils::get_table_name(table_name);
@@ -110,7 +111,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
   TableMetaData * t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
 
   IndexOperationParams params;
-  params.value_size = compute_key_size(*t_metadata, ind_metadata);
+  params.value_size = IndexManager::compute_key_size(*t_metadata, ind_metadata);
   params.value = new char[params.value_size];
 #ifdef EIM_DBG
   Utils::info("[EIM][Create index] Key size was determined to be " + std::to_string(params.value_size));
@@ -118,46 +119,16 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
 #endif
 
   HeapFileManager::HeapRecordsIterator rec_itr(t_metadata->name());
-  ExtIndexManager mock_manager(index_file_name);
+  ExtIndexManager mock_manager(table_name, ind_metadata.name());
   while (rec_itr.next()) {
     params.page_id = rec_itr.record_page_id();
     params.slot_id = rec_itr.record_slot_id();
-    init_params_with_record(*t_metadata, ind_metadata, *rec_itr, &params);
+    IndexManager::init_params_with_record(*t_metadata, ind_metadata, *rec_itr, &params);
     mock_manager.insert_value(params);
   }
 
   delete [] (char *)params.value;
   delete t_metadata;
-}
-
-size_t ExtIndexManager::compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta) {
-  size_t key_size = 0;
-  for (int i = 0; i < i_meta.keys_size(); ++i) {
-    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
-      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
-        key_size += t_meta.attribute(attr_i).size();
-#ifdef EIM_DBG
-        Utils::info("  [EIM][Determine key size] Key attr " + t_meta.attribute(attr_i).name() + " has size " + std::to_string(t_meta.attribute(attr_i).size()));
-#endif
-        break;
-      }
-    }
-  }
-  return key_size;
-}
-
-void ExtIndexManager::init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, IndexOperationParams * params) {
-  size_t rec_offset = 0;
-  size_t key_offset = 0;
-  for (int i = 0; i < i_meta.keys_size(); ++i) {
-    for (int attr_i = 0; attr_i < t_meta.attribute_size(); ++attr_i) {
-      if (i_meta.keys(i).name().compare(t_meta.attribute(attr_i).name()) == 0) {
-        memcpy((char *)params->value + key_offset, (char *)rec_data + rec_offset, t_meta.attribute(attr_i).size());
-        key_offset += t_meta.attribute(attr_i).size();
-      }
-      rec_offset += t_meta.attribute(attr_i).size();
-    }
-  }
 }
 
 int ExtIndexManager::look_up_value(IndexOperationParams * params) {

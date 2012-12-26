@@ -6,6 +6,7 @@
 #include "TableMetadata.pb.h"
 #include "../../backend/Page.h"
 #include "../RecordsIterator.h"
+#include "IndexManager.h"
 
 //File format
 // 0th page -- meta data: root_ptr; key_size; pages_used
@@ -14,7 +15,7 @@
 // for nodes ptr value ptr ... ptr value ... ptr
 // for leafs: page_id:slot_id values...
 
-class BTreeIndexManager {
+class BTreeIndexManager : public IndexManager {
 public:
   class SortedIterator : public RecordsIterator {
   public:
@@ -44,9 +45,9 @@ public:
   BTreeIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
 
-  int look_up_value(IndexOperationParams * params);
-  bool insert_value(IndexOperationParams const & params);
-  bool delete_value(IndexOperationParams * params);
+  virtual int look_up_value(IndexOperationParams * params);
+  virtual bool insert_value(IndexOperationParams const & params);
+  virtual bool delete_value(IndexOperationParams * params);
   BTreeIndexManager::SortedIterator get_sorted_records_iterator();
 
   unsigned get_key_size() const;
@@ -65,9 +66,6 @@ private:
     unsigned entries_per_page;
   };
 private:
-  //TODO remove duplication
-  static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
-  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,IndexOperationParams * params);
 //info retrievers
   unsigned get_records_count(char * data) const;
   void set_records_count(char * data, unsigned new_rec_cnt);

@@ -5,6 +5,7 @@
 #include "../../backend/Page.h"
 //in make -I option is used, so we don't need to go a dir upper
 #include "TableMetadata.pb.h"
+#include "IndexManager.h"
 
 // Format of files: 
 // ext_hash_<attr_names> - page with index context
@@ -15,14 +16,14 @@
 //    1st.. number of items on page + ints that points on buckets
 
 
-class ExtIndexManager {
+class ExtIndexManager : public IndexManager {
 public:
-  ExtIndexManager(std::string const & table_name);
+  ExtIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);
 
-  int look_up_value(IndexOperationParams * params);
-  bool insert_value(IndexOperationParams const & params);
-  bool delete_value(IndexOperationParams * params);
+  virtual int look_up_value(IndexOperationParams * params);
+  virtual bool insert_value(IndexOperationParams const & params);
+  virtual bool delete_value(IndexOperationParams * params);
 
 #ifndef TEST_EXT_IND
 private: //methods
