@@ -13,7 +13,7 @@
 //    each page is a bucket. Bucket number is a page offset + bucket size. Page starts with a hash depth int + record count
 //    each record: <rid> (x2 ints) + indexed data
 // ext_hash_<attr_names>_directory
-//    0th metadata -- total bucket depth;
+//    0th metadata -- total bucket depth + key size
 //    1st.. number of items on page + ints that points on buckets
 
 
@@ -24,7 +24,7 @@ public:
     BucketIterator(
       std::string const & table_name,
       std::string const & index_name,
-      char * init_key, unsigned key_size);
+      char * init_key);
 
     virtual ~BucketIterator();
     
@@ -36,7 +36,7 @@ public:
     ExtIndexManager * btm_;
 
     Page * current_page_;
-    TableMetaData *t_metadata_;
+    TableMetaData * t_metadata_;
     unsigned page_offset_;
     unsigned records_to_go_;
     unsigned key_size_;
@@ -51,18 +51,21 @@ public:
   virtual bool insert_value(IndexOperationParams const & params);
   virtual bool delete_value(IndexOperationParams * params);
 
-#ifndef TEST_EXT_IND
 private: //methods
-#endif
+
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta);
   static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,IndexOperationParams * params);
   static void init_buckets(std::string const & index_file_name, unsigned from, unsigned till, unsigned depth);
   bool bucket_has_free_slot(Page * bucket_id, unsigned record_size);
-  void split_bucket(unsigned bucket_number, Page * page, unsigned record_size);
+  void split_bucket(unsigned bucket_number, Page * page);
   void double_buckets_count();
   unsigned compute_hash(IndexOperationParams const & params);
   unsigned get_bucket_id(unsigned bucket_ptr);
   void add_ptr_to_index_dir(unsigned bucket_id, unsigned total);
+
+  unsigned get_key_size();
+  unsigned get_records_count(char * data);
+  void set_records_count(char * data, unsigned new_count);
 
 private: //classes
   class BucketPointersIterator {

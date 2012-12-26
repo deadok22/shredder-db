@@ -47,6 +47,8 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
   Utils::info("[CsvPrinter] get csv_string");  
 #endif
   stringstream record;
+  record.precision(1);
+
   int offset = 0;
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind < end; ++attr_ind) {
     int attr_size = table.attribute(attr_ind).size();
@@ -61,7 +63,6 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
         break;
       case DOUBLE: {
           double value = *((double *)char_attr_value);
-          record.precision(1);
           record << std::fixed << value;
         }
         break;

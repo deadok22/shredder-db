@@ -29,11 +29,12 @@ bool DiskManager::update_context(string const & fname)
 #ifdef IO_DISK_M
     Utils::log("[DiskManager] update context(file):"+fname_+"->"+fname);
 #endif
-    fname_ = fname;
     if(file_ != NULL && fclose(file_) != 0){
       Utils::log("[DiskManager] Unable to close file: "+fname_,ERROR);
       Utils::critical_error();
     }
+    file_ = NULL;
+    fname_ = fname;
     return init_file();
   }
   return true;
@@ -99,7 +100,10 @@ bool DiskManager::write_page(Page * page)
 
 DiskManager::~DiskManager()
 {
-  fclose(file_);
+  if (file_ != NULL) {
+    fclose(file_);
+    file_ = NULL;
+  }
 }
 
 

@@ -68,7 +68,6 @@ bool HeapFileManager::process_insert_record(
   }
 
   if (result_ctx != NULL) {
-    result_ctx->record_data = new char[table.record_size()];
     memcmp(result_ctx->record_data, new_record_ptr, table.record_size());
     result_ctx->record_page_id = page.get_pid();
     result_ctx->record_slot_id = slot_number;
@@ -218,7 +217,7 @@ void * HeapFileManager::get_record(TableMetaData const & table, unsigned page_id
   Page &req_page = bm.get_page(page_id, get_heap_file_name(table.name()));
 
   //NB check if something is recorded?
-  char * data = new char[table.record_size()];
+  char * data = new char[table.record_size()]();
   memcpy(data, (char *)req_page.get_data() + slot_number * table.record_size() + table.space_for_bit_mask(), table.record_size());
 
   req_page.unpin();
@@ -274,9 +273,7 @@ HeapFileManager::HeapRecordsIterator::HeapRecordsIterator(std::string const & ta
   t_meta_ = MetaDataProvider::get_instance()->get_meta_data(table_name);
 }
 
-HeapFileManager::HeapRecordsIterator::~HeapRecordsIterator() {
-  delete t_meta_;
-}
+HeapFileManager::HeapRecordsIterator::~HeapRecordsIterator() { }
 
 
 bool HeapFileManager::HeapRecordsIterator::switch_page() {

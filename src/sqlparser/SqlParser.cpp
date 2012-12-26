@@ -239,15 +239,17 @@ std::vector<std::string> SqlParser::parse_comma_separated_values(std::string con
   static const std::string COMMA_SEPARATED_VALUE_REGEX_TEXT
         = "^\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,]+))\\s*(?:$|,)";
   static const boost::regex COMMA_SEPARATED_VALUE_REGEX(COMMA_SEPARATED_VALUE_REGEX_TEXT, boost::regex_constants::icase);
-  
+#ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] [parseCSV] parsing comma separated values");
-  
+#endif
   std::string::const_iterator start = values_string.begin();
   std::string::const_iterator end = values_string.end();
   std::vector<std::string> values;
   boost::smatch match_results;
   while (boost::regex_search(start, end, match_results, COMMA_SEPARATED_VALUE_REGEX)) {
+#ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] [parseCSV] parsed value: " + match_results["VALUE"].str());
+#endif
     values.push_back(match_results["VALUE"].str());
     start = match_results[0].second;
   }

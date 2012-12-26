@@ -114,7 +114,7 @@ RecordsIterator * QueryPlanner::handle_query_using_index(TableMetaData const & t
       //ind_ctx.sample_record will be deleted by iterator
     }
   } else {
-    iterator = new ExtIndexManager::BucketIterator(table.name(), index_name, ind_ctx.sample_record, table.record_size());
+    iterator = new ExtIndexManager::BucketIterator(table.name(), index_name, ind_ctx.sample_record);
      //ind_ctx.sample_record will be deleted by iterator
   }
   delete ind_ctx.cmp;

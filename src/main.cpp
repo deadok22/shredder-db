@@ -58,7 +58,6 @@ void describe_table(string const & table_name) {
       std::cout << "based on " << (index.type() == 0 ? "HASH" : "BTREE") << std::endl;
     }
   }
-  delete metadata;
 }
 
 void capitalize(std::string * s) {

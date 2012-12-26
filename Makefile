@@ -1,4 +1,4 @@
-
+# IO_BUFF_M -- buffer manager
 # MAIN_DBG is for mostly for repl 
 # DBFACADE_DBG for DbFacade logic
 # SQLPARSE_DBG - for sql parsing subsystem
@@ -10,8 +10,8 @@
 # QPLAN -- query planner debug mode
 
 #D_KEY = -DDEBUG -DMAIN_DBG -DDBFACADE_DBG -DSQLPARSE_DBG -DEIM_DBG -DPAGE_D_DBG -DHFM_DBG -DBTREE_SI_DBG
-D_KEY = -DDEBUG -DDBFACADE_DBG -DQPLAN -DBTREE_DBG -DEIM_DBG
-COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
+D_KEY = -DDEBUG -DIO_DISK_M -DQPLAN
+COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall -g3
 
 all: build
 
@@ -49,7 +49,7 @@ build_core: init build_common build_proto
 
 build_backend: init build_common
 	g++ src/backend/DiskManager.cpp $(COPTS) -c -o build/DiskManager.o
-	g++ src/backend/BufferManager.cpp $(COPTS) -c -o build/BufferManager.o
+	g++ src/backend/BufferManager.cpp $(COPTS) $(D_KEY) -c -o build/BufferManager.o
 	g++ src/backend/Page.cpp $(COPTS) -c -o build/Page.o
 	g++ src/backend/PagesDirectory.cpp $(COPTS) $(D_KEY) -c -o build/PagesDirectory.o
 	g++ src/backend/HeapFileManager.cpp $(COPTS) $(D_KEY) -Ibuild/src/core -c -o build/HeapFileManager.o

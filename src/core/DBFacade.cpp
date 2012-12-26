@@ -81,8 +81,10 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
   Utils::info("[DBFacade] Saving index metadata");
 #endif
   if (!MetaDataProvider::add_index_info(stmt->get_table_name(), index_metadata)) {
-    Utils::warning("[DBFacade] Unable to save index description");
+    std::cout << "Unable to save index description" << std::endl;
   }
+
+  std::cout << "Index creation finished." << std::endl;
 }
 
 void DBFacade::execute_statement(CreateTableStatement const * stmt) {
@@ -142,7 +144,6 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   }
 
   delete rec_itr;
-  delete metadata;
 }
 
 void DBFacade::execute_statement(InsertStatement const * stmt) {
@@ -157,6 +158,8 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   }
 
   HeapFileManager::HeapFMOperationResult insertion_result;
+  insertion_result.record_data = new char[metadata->record_size()]();
+
   hfm.process_insert_record(*metadata, stmt->get_column_names(), stmt->get_values(), &insertion_result);
 
   //add to all indices
@@ -175,7 +178,7 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
 
     IndexOperationParams params;
     params.value_size = IndexManager::compute_key_size(*metadata, *i);
-    params.value = new char[params.value_size];
+    params.value = new char[params.value_size]();
     params.page_id = insertion_result.record_page_id;
     params.slot_id = insertion_result.record_slot_id;
     IndexManager::init_params_with_record(*metadata, *i, insertion_result.record_data, &params);
@@ -188,7 +191,6 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
 
   delete [] insertion_result.record_data;
   std::cout << "OK. 1 row affected" << std::endl;
-  delete metadata;
 }
 /*
 void DBFacade::execute_statement(UpdateStatement const * stmt) {
@@ -210,7 +212,6 @@ void DBFacade::execute_statement(UpdateStatement const * stmt) {
   }
 
   delete rec_itr;
-  delete metadata;
 }
 
 void DBFacade::execute_statement(DeleteStatement const * stmt) {
@@ -232,7 +233,6 @@ void DBFacade::execute_statement(DeleteStatement const * stmt) {
   }
 
   delete rec_itr;
-  delete metadata;
 }
 */
 void DBFacade::create_empty_file(std::string const & fname) {
