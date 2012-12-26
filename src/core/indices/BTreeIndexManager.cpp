@@ -449,9 +449,9 @@ std::string BTreeIndexManager::get_index_file_name() const { return index_file_n
 //-----------------------------------------------------------------------------
 // Sorted iterator
 
-BTreeIndexManager::SortedIterator::SortedIterator(std::string const & table_name, std::string const & index_name):
+BTreeIndexManager::SortedIterator::SortedIterator(std::string const & table_name, std::string const & index_name, char * init_key):
   btm_(new BTreeIndexManager(table_name, index_name)), t_metadata(NULL), current_page_(NULL),
-  page_offset_(0), records_to_go_(0), key_size_(0), record_data_(NULL) {
+  page_offset_(0), records_to_go_(0), key_size_(0), record_data_(NULL), init_key_(init_key) {
 
   t_metadata = MetaDataProvider::get_instance()->get_meta_data(table_name);
   key_size_ = btm_->get_key_size();
@@ -461,10 +461,25 @@ BTreeIndexManager::SortedIterator::~SortedIterator() {
   if (current_page_ != NULL) { current_page_->unpin(); }
   delete t_metadata;
   if (record_data_ != NULL) { delete [] (char *)record_data_; }
+  if (init_key_ != NULL) { delete [] init_key_; }
 }
 
 bool BTreeIndexManager::SortedIterator::switch_page() {
-  unsigned page_id = current_page_ == NULL ? btm_->get_left_most_leaf() : *((unsigned *)current_page_->get_data() + 2);
+  unsigned page_id = 0;
+
+  if (current_page_ == NULL) {
+    if (init_key_ == NULL) {
+      page_id = btm_->get_left_most_leaf();
+    } else {
+      IndexOperationParams params;
+      params.value = init_key_;
+      params.value_size = key_size_;
+      page_id = btm_->tree_search(btm_->get_root_node(), &params);
+    }
+  } else {
+    page_id = *((unsigned *)current_page_->get_data() + 2);
+  }
+
 #ifdef BTREE_SI_DBG
   Utils::info("[BTree][SortIter] Next leaf page id is " + std::to_string(page_id));
 #endif

@@ -18,7 +18,7 @@ class BTreeIndexManager {
 public:
   class SortedIterator : public RecordsIterator {
   public:
-    SortedIterator(std::string const & table_name, std::string const & index_name);
+    SortedIterator(std::string const & table_name, std::string const & index_name, char * init_key = NULL);
 
     virtual ~SortedIterator();
     
@@ -37,9 +37,10 @@ public:
     unsigned records_to_go_;
     unsigned key_size_;
     void * record_data_;
+    char * init_key_;
   };
 public:
-BTreeIndexManager() {}
+  BTreeIndexManager() {}
   BTreeIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
 

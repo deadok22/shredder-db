@@ -7,9 +7,10 @@
 # HFM_DBG -- heap file manager debug mode
 # BTREE_DBG -- btree index manager debug mode
 # BTREE_SI_DBG -- btree sorted iterator
+# QPLAN -- query planner debug mode
 
 #D_KEY = -DDEBUG -DMAIN_DBG -DDBFACADE_DBG -DSQLPARSE_DBG -DEIM_DBG -DPAGE_D_DBG -DHFM_DBG -DBTREE_SI_DBG
-D_KEY = -DDEBUG -DDBFACADE_DBG -DBTREE_DBG -DBTREE_SI_DBG
+D_KEY = -DDEBUG -DDBFACADE_DBG -DQPLAN
 COPTS = -std=c++0x -D_GLIBCXX_FULLY_DYNAMIC_STRING -Wall
 
 all: build
