@@ -11,7 +11,8 @@ enum SqlStatementType {
   INSERT = 3,
   UPDATE = 4,
   DELETE = 5,
-  SELECT = 6
+  SELECT = 6,
+  DROP   = 7
 };
 
 class SqlStatement {
@@ -199,6 +200,11 @@ class UpdateStatement : public TableTargetedStatement {
 };
 //TODO
 class DeleteStatement : public TableTargetedStatement {
+
+
+};
+//TODO
+class DropStatement : public TableTargetedStatement {
 
 
 };
