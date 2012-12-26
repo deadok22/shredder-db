@@ -9,11 +9,14 @@
 #include "../backend/HeapFileManager.h"
 #include "QueryPlanner.h"
 
+#include "indices/IndexManager.h"
 #include "indices/BTreeIndexManager.h"
 #include "indices/ExtIndexManager.h"
 #include "indices/IndexOperationParams.h"
 #include "RecordsIterator.h"
 #include "CsvPrinter.h"
+
+typedef google::protobuf::RepeatedPtrField<TableMetaData_IndexMetadata>::const_iterator index_const_iter;
 
 DBFacade * DBFacade::instance_ = new DBFacade();
 
@@ -153,10 +156,38 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
     return;
   }
 
-  hfm.process_insert_record(*metadata, stmt->get_column_names(), stmt->get_values());
+  HeapFileManager::HeapFMOperationResult insertion_result;
+  hfm.process_insert_record(*metadata, stmt->get_column_names(), stmt->get_values(), &insertion_result);
 
-  //TODO add to all indices
-  cout << "Insert OK" << std::endl;
+  //add to all indices
+  for (index_const_iter i = metadata->indices().begin(); i != metadata->indices().end(); ++i) {
+    IndexManager *index_mgr = NULL;
+    switch (i->type()) {
+      case IndexManager::HASH: index_mgr = new ExtIndexManager(metadata->name(), i->name()); break;
+      case IndexManager::BTREE: index_mgr = new BTreeIndexManager(metadata->name(), i->name()); break;
+    }
+
+
+    if (index_mgr == NULL) {
+      Utils::warning("Can't update index named " + i->name() + ". It has unsupported type");
+      continue;
+    }
+
+    IndexOperationParams params;
+    params.value_size = IndexManager::compute_key_size(*metadata, *i);
+    params.value = new char[params.value_size];
+    params.page_id = insertion_result.record_page_id;
+    params.slot_id = insertion_result.record_slot_id;
+    IndexManager::init_params_with_record(*metadata, *i, insertion_result.record_data, &params);
+
+    index_mgr->insert_value(params);
+
+    delete [] (char *)params.value;
+    delete index_mgr;
+  }
+
+  delete [] insertion_result.record_data;
+  std::cout << "OK. 1 row affected" << std::endl;
   delete metadata;
 }
 

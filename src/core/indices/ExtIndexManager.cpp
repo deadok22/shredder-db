@@ -82,7 +82,8 @@ int * ExtIndexManager::BucketPointersIterator::operator->() {
 //-----------------------------------------------------------------------------
 // ExtIndetManager implementation
 
-ExtIndexManager::ExtIndexManager(std::string const & index_path): index_path_(index_path) {}
+ExtIndexManager::ExtIndexManager(std::string const & table_name, std::string const & index_name):
+ index_path_(Utils::get_table_dir(table_name) + "/ext_hash_" + index_name) {}
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
   std::string path = Utils::get_table_name(table_name);
@@ -118,7 +119,7 @@ void ExtIndexManager::create_index(std::string const & table_name, TableMetaData
 #endif
 
   HeapFileManager::HeapRecordsIterator rec_itr(t_metadata->name());
-  ExtIndexManager mock_manager(index_file_name);
+  ExtIndexManager mock_manager(table_name, ind_metadata.name());
   while (rec_itr.next()) {
     params.page_id = rec_itr.record_page_id();
     params.slot_id = rec_itr.record_slot_id();

@@ -10,6 +10,7 @@ public:
   virtual int look_up_value(IndexOperationParams * params) = 0;
   virtual bool insert_value(IndexOperationParams const & params) = 0;
   virtual bool delete_value(IndexOperationParams * params) = 0;
+  virtual ~IndexManager() {}
 
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta) {
     size_t key_size = 0;
@@ -24,7 +25,7 @@ public:
     return key_size;
   }
   
-  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data,IndexOperationParams * params) {
+  static void init_params_with_record(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta, void * rec_data, IndexOperationParams * params) {
     size_t rec_offset = 0;
     size_t key_offset = 0;
     for (int i = 0; i < i_meta.keys_size(); ++i) {

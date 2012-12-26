@@ -17,7 +17,8 @@ HeapFileManager & HeapFileManager::get_instance() {
 bool HeapFileManager::process_insert_record(
   TableMetaData const & table,
   std::vector<std::string> const & column_names,
-  std::vector<std::string> const & column_values) {
+  std::vector<std::string> const & column_values,
+  HeapFMOperationResult *result_ctx) {
 
   std::map<std::string, std::string> name_to_value;
   for (unsigned i = 0; i < column_names.size(); ++i) {
@@ -35,7 +36,7 @@ bool HeapFileManager::process_insert_record(
      ". Table: " + table.name() + "; PageId: " + std::to_string(page.get_pid()));
 #endif
   page_data += slot_number * table.record_size() + table.space_for_bit_mask();
-  
+  char * new_record_ptr = page_data;
   //save values in order
   int offset = 0;
   for (int attr_ind = 0; attr_ind < table.attribute_size(); ++attr_ind) {
@@ -64,6 +65,13 @@ bool HeapFileManager::process_insert_record(
     }
 
     offset += attr_size;
+  }
+
+  if (result_ctx != NULL) {
+    result_ctx->record_data = new char[table.record_size()];
+    memcmp(result_ctx->record_data, new_record_ptr, table.record_size());
+    result_ctx->record_page_id = page.get_pid();
+    result_ctx->record_slot_id = slot_number;
   }
 
   page.set_dirty();

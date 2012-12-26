@@ -29,13 +29,18 @@ public://class
     PagesDirectory::NotEmptyPagesIterator page_itr_;
 
   };
-
-
+public:
+  struct HeapFMOperationResult {
+    char * record_data;
+    unsigned record_page_id;
+    unsigned record_slot_id;
+  };
 public:
   bool process_insert_record(
     TableMetaData const & table,
     std::vector<std::string> const & column_names,
-    std::vector<std::string> const & column_values);
+    std::vector<std::string> const & column_values,
+    HeapFMOperationResult * result_ctx = NULL);
 
   bool process_delete_record(/* TODO */);
   void print_all_records(TableMetaData const & table);

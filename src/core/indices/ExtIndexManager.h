@@ -16,9 +16,9 @@
 //    1st.. number of items on page + ints that points on buckets
 
 
-class ExtIndexManager : public IndexManager{
+class ExtIndexManager : public IndexManager {
 public:
-  ExtIndexManager(std::string const & table_name);
+  ExtIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & metadata);
 
   virtual int look_up_value(IndexOperationParams * params);
