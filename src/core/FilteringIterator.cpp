@@ -1,8 +1,9 @@
 #include "FilteringIterator.h"
 
 FilteringIterator::FilteringIterator(
-  RecordsIterator * data_provider, RecordComparer *comparer, int p_type, void * record_for_cmp):
-  data_provider_(data_provider), comparer_(comparer), p_type_(p_type), record_for_cmp_(record_for_cmp) {}
+  RecordsIterator * data_provider, RecordComparer *comparer, int p_type, void * record_for_cmp, long long max_miss_cnt):
+  data_provider_(data_provider), comparer_(comparer), p_type_(p_type),
+  miss_cnt_(0), max_miss_cnt_(max_miss_cnt), record_for_cmp_(record_for_cmp) {}
   
 FilteringIterator::~FilteringIterator() {
   delete data_provider_;
@@ -11,8 +12,13 @@ FilteringIterator::~FilteringIterator() {
 }
 
 bool FilteringIterator::next() {
+  if (max_miss_cnt_ != -1 && max_miss_cnt_ < miss_cnt_) {
+    return false;
+  }
+
   while (data_provider_->next()) {
     if (is_record_ok()) { return true; }
+    else { ++miss_cnt_; }
   }
 
   return false;

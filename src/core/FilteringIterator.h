@@ -7,7 +7,7 @@
 
 class FilteringIterator : public RecordsIterator{
 public:
-  FilteringIterator(RecordsIterator * data_provider, RecordComparer *comparer, int p_type, void * record_for_cmp);
+  FilteringIterator(RecordsIterator * data_provider, RecordComparer *comparer, int p_type, void * record_for_cmp, long long max_miss_cnt = -1);
   virtual ~FilteringIterator();
 
   virtual bool next();
@@ -20,5 +20,7 @@ private:
   RecordsIterator * data_provider_;
   RecordComparer * comparer_;
   int p_type_;
+  long long miss_cnt_;
+  int max_miss_cnt_;
   void * record_for_cmp_;
 };
