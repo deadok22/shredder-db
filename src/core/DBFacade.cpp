@@ -13,6 +13,8 @@
 #include "indices/ExtIndexManager.h"
 #include "indices/IndexOperationParams.h"
 #include "RecordsIterator.h"
+#include "CsvPrinter.h"
+
 DBFacade * DBFacade::instance_ = new DBFacade();
 
 DBFacade * DBFacade::get_instance() {
@@ -119,7 +121,6 @@ void DBFacade::execute_statement(CreateTableStatement const * stmt) {
 }
 
 void DBFacade::execute_statement(SelectStatement const * stmt) {
-  HeapFileManager &hfm = HeapFileManager::get_instance();
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
 
   if (metadata == NULL) {
@@ -132,8 +133,9 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   std::vector<WhereClause::Predicate> conds = stmt->has_where_clause() ? stmt->get_where_clause().get_predicates() : vector<WhereClause::Predicate>();
   RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
 
+  std::cout << CsvPrinter::get_instance().get_header_csv(metadata->name());
   while (rec_itr->next()) {
-    hfm.print_record(*metadata, (char *)**rec_itr);
+    std::cout << CsvPrinter::get_instance().get_csv(**rec_itr, metadata->name());
   }
 
   delete rec_itr;
