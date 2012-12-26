@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 #include "TableMetadata.pb.h"
 
@@ -14,7 +14,8 @@ public:
   static MetaDataProvider * get_instance();
 private:
   static MetaDataProvider * instance_;
-  static std::map<std::string, TableMetaData *> cache_;
+  static std::unordered_map<std::string, TableMetaData *> cache_;
+  static unsigned MAX_CACHE_SIZE;
 };
 
 #ifdef TEST_MDP

@@ -12,7 +12,8 @@
 
 using namespace std;
 
-
+unsigned MetaDataProvider::MAX_CACHE_SIZE = 10;
+std::unordered_map<std::string, TableMetaData *> MetaDataProvider::cache_;
 MetaDataProvider * MetaDataProvider::instance_ = new MetaDataProvider();
 
 MetaDataProvider * MetaDataProvider::get_instance() {
@@ -56,12 +57,26 @@ TableMetaData * MetaDataProvider::get_meta_data(string const & table_name) {
   DBInfo & db_info = InfoPool::get_instance().get_db_info();
   //move to consts
   string meta_data_path = db_info.root_path + table_name + "/metadata";
+
+  if (cache_.count(meta_data_path) > 0) {
+    return cache_[meta_data_path];
+  }
+
   if (!Utils::check_existence(meta_data_path, false)) { return NULL; }
 
   fstream input(meta_data_path.c_str(), ios::in | ios::binary);
   TableMetaData * md = new TableMetaData();
   md->ParseFromIstream(&input);
   input.close();
+
+
+  if (cache_.size() == MAX_CACHE_SIZE) {
+    TableMetaData * table_to_rm = cache_.begin()->second;
+    cache_.erase(cache_.begin()->first);
+    delete table_to_rm;
+  }
+  cache_[meta_data_path] = md;
+  
   return md;
 }
 
@@ -102,6 +117,6 @@ bool MetaDataProvider::save_meta_data(TableMetaData * meta_data) {
   Utils::info("[MetaDataProvider] Store metadata under " + meta_data_path);
   meta_data->SerializeToOstream(&output);
   output.close();
-  
+
   return true;
 }
