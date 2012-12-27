@@ -52,7 +52,7 @@ bool HeapFileManager::process_insert_record(
         break;
       case DOUBLE: {
           std::string value_to_store = name_to_value.count(attr_name) == 0 ? "0" : name_to_value[attr_name];
-          double value = std::stod(name_to_value[attr_name]);
+          double value = std::stod(value_to_store);
           *((double *)(page_data + offset)) = value;
         }
         break;
