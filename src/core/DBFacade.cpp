@@ -41,10 +41,10 @@ void DBFacade::execute_statement(SqlStatement const * stmt) {
       execute_statement((CreateIndexStatement const *) stmt);
       break;
     case UPDATE:
-      //execute_statement((UpdateStatement const *) stmt);
+      execute_statement((UpdateStatement const *) stmt);
       break;
     case DELETE:
-      //execute_statement((DeleteStatement const *) stmt);
+      execute_statement((DeleteStatement const *) stmt);
       break;
     case DROP:
       execute_statement((DropStatement const *) stmt);  
@@ -195,7 +195,7 @@ void DBFacade::execute_statement(InsertStatement const * stmt) {
   delete [] insertion_result.record_data;
   std::cout << "OK. 1 row affected" << std::endl;
 }
-/*
+
 void DBFacade::execute_statement(UpdateStatement const * stmt) {
   HeapFileManager &hfm = HeapFileManager::get_instance();  
   TableMetaData * metadata = MetaDataProvider::get_instance()->get_meta_data(stmt->get_table_name());
@@ -211,7 +211,7 @@ void DBFacade::execute_statement(UpdateStatement const * stmt) {
   RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
 
   while (rec_itr->next()) {
-    hfm.process_update_record(*metadata, res_itr->record_page_id(), rec_itr->record_slot_id(), stmt->get_column_names(), stmt->get_values());
+    hfm.process_update_record(*metadata, rec_itr->record_page_id(), rec_itr->record_slot_id(), stmt->get_column_names(), stmt->get_values());
   }
 
   delete rec_itr;
@@ -232,12 +232,12 @@ void DBFacade::execute_statement(DeleteStatement const * stmt) {
   RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
 
   while (rec_itr->next()) {
-    hfm.process_delete_record(*metadata, res_itr->record_page_id(), rec_itr->record_slot_id());
+    hfm.process_delete_record(*metadata, rec_itr->record_page_id(), rec_itr->record_slot_id());
   }
 
   delete rec_itr;
 }
-*/
+
 
 void DBFacade::execute_statement(DropStatement const * stmt) {
   BufferManager &bm = BufferManager::get_instance();

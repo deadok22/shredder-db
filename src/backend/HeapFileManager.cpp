@@ -165,7 +165,7 @@ bool HeapFileManager::process_update_record(
       case VARCHAR: {
           if( name_to_value.count(attr_name) ) {
             memset(page_data + offset, '\0', attr_size);
-            memcpy(page_data + offset, name_to_value[attr_name].c_str(), attr_size);
+            memcpy(page_data + offset, name_to_value[attr_name].c_str(), 1 + name_to_value[attr_name].size());
             *(page_data + offset + attr_size) = '\0';
           }
         }
