@@ -86,10 +86,37 @@ RecordComparer::RecordComparer(TableMetaData const & tmd,
   }
 }
 
-//TODO implement
+typedef google::protobuf::RepeatedPtrField<TableMetaData_IndexMetadata_KeyInfo>::const_iterator idx_key_const_iter;
+
+void RecordComparer::init_index_record_comparer(TableMetaData const & tmd, TableMetaData_IndexMetadata const & imd) {
+  for (idx_key_const_iter idx_key = imd.keys().begin(); idx_key != imd.keys().end(); ++idx_key) {
+    size_t offset_bytes = 0;
+    for (attr_const_iter attr = tmd.attribute().begin(); attr != tmd.attribute().end(); ++attr) {
+      if (attr->name() == idx_key->name()) {
+        cmp_rules_.push_back(RecordComparer::RecordComparisonRule(offset_bytes, DataType((TypeCode)attr->type_name(), attr->size()), !idx_key->asc()));
+        break;
+      } else {
+        offset_bytes += attr->size();
+      }
+    }
+  }
+}
+
+typedef google::protobuf::RepeatedPtrField<TableMetaData_IndexMetadata>::const_iterator idx_const_iter;
+
 RecordComparer::RecordComparer(TableMetaData const & tmd, std::string const & index_name) {
-  Utils::error("[RecordComparer] RecordComparer(TableMetaData const &, std::string const &) is not implemented yet.");
-  Utils::critical_error();
+  bool index_found = false;
+  for (idx_const_iter i = tmd.indices().begin(); i != tmd.indices().end(); ++i) {
+    if (index_name == i->name()) {
+      init_index_record_comparer(tmd, *i);
+      index_found = true;
+      break;
+    }
+  }
+  if (!index_found) {
+    Utils::error("[RecordComparer] no index named " + index_name + " found in schema");
+    Utils::critical_error();
+  }
 }
 
 int RecordComparer::compare(void const * data1, void const * data2) const {
