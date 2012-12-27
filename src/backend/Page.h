@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <algorithm>
+#include <ctime>
 
  
 using std::string;
@@ -14,7 +15,6 @@ public:
   char* get_data(bool is_read_only = true);
   size_t get_pid() const;
   string const & get_fname() const;
-  
  
   void set_dirty();
   void reset_dirty();
@@ -23,6 +23,8 @@ public:
   
   bool is_dirty();
   bool is_unpinned();
+
+  time_t get_tstamp();
   ~Page();
 private:
    
@@ -31,6 +33,7 @@ private:
   size_t pin_count_;
   bool dirty_;
   char* data_;
+  time_t tstamp_;
 
 private:
   Page(Page const &);

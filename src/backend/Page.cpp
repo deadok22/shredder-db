@@ -1,7 +1,7 @@
 #include "Page.h"
 
 Page::Page(size_t pid, string const& fname, size_t pin_c , bool dirty )
-  :fname_(fname), page_id_(pid), pin_count_(pin_c), dirty_(dirty), data_(new char[PAGE_SIZE]) {
+  :fname_(fname), page_id_(pid), pin_count_(pin_c), dirty_(dirty), data_(new char[PAGE_SIZE]), tstamp_( time (NULL) ) {
   std::fill(data_, data_ + PAGE_SIZE, 0);
 }
 
@@ -25,3 +25,5 @@ void Page::unpin() { pin_count_ = std::max((int)pin_count_ - 1, 0); }
 
 void Page::set_dirty() { dirty_ = true; }
 void Page::reset_dirty() { dirty_ = false; }
+
+time_t Page::get_tstamp() { return tstamp_; }
