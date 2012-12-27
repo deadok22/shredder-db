@@ -15,8 +15,9 @@ public:
       bool is_descending;
   };
 public:
-  RecordComparer(TableMetaData const & tmd, std::string const & index_name);
   RecordComparer(TableMetaData const & tmd, std::vector<RecordComparer::ComparisonRule> const & comparison_rules);
+  // this constructor constructs an IndexRecordComparer
+  RecordComparer(TableMetaData const & tmd, std::string const & index_name);
   int compare(void const * data1, void const * data2) const;
 private:
   class RecordComparisonRule {
@@ -33,6 +34,8 @@ private:
     DataType data_type_;
     bool is_descending_;
   };
+private:
+  void init_index_record_comparer(TableMetaData const & tmd, TableMetaData_IndexMetadata const & imd);
 private:
   std::vector<RecordComparisonRule> cmp_rules_;
 };

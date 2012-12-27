@@ -59,7 +59,7 @@ bool HeapFileManager::process_insert_record(
       case VARCHAR:
         std::string value_to_store = name_to_value.count(attr_name) == 0 ? std::string(attr_size, '\0') : name_to_value[attr_name];
         memset(page_data + offset, '\0', attr_size); //must mem set since value is used in hash counting
-        memcpy(page_data + offset, value_to_store.c_str(), attr_size);
+        memcpy(page_data + offset, value_to_store.c_str(), 1 + value_to_store.size());
         *(page_data + offset + attr_size) = '\0';
         break;
     }
@@ -93,6 +93,7 @@ int HeapFileManager::take_free_slot(char * page_data) {
   int slot_offset = 0;
   while (true) {
     char data_to_test = *(page_data + slot_offset);
+    //RW: magic constant
     if (data_to_test != 0xFF) {
       for (int mask_offset = 0; mask_offset < 8; ++mask_offset) {
         if (((1 << (7 - mask_offset)) & data_to_test) == 0) {
@@ -164,7 +165,7 @@ bool HeapFileManager::process_update_record(
       case VARCHAR: {
           if( name_to_value.count(attr_name) ) {
             memset(page_data + offset, '\0', attr_size);
-            memcpy(page_data + offset, name_to_value[attr_name].c_str(), attr_size);
+            memcpy(page_data + offset, name_to_value[attr_name].c_str(), 1 + name_to_value[attr_name].size());
             *(page_data + offset + attr_size) = '\0';
           }
         }

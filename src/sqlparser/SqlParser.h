@@ -45,8 +45,9 @@ int main() {
   delete parser.parse("CREATE INDEX my_index ON my_table(a, b DESC, c ASC) USING BTREE");
   delete parser.parse("CREATE UNIQUE INDEX my_index ON my_table(a ASC) USING HASH");
   
-  delete parser.parse("DELETE FROM table_name   ");
+  delete parser.parse("deleTE FROM table_name   ");
   delete parser.parse("DELETE FROM table_name WHERE a < 10");
+  delete parser.parse("delete from cat where num = 24");
   
   delete parser.parse("UpdaTe table_name SeT a = 10, b =  150");
   delete parser.parse("UPDATE table_name SET b = \"NaNNaNNaNNaN BATMAN!!!\" WhERE a > 15");

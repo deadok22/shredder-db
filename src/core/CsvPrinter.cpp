@@ -53,29 +53,22 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind < end; ++attr_ind) {
     int attr_size = table.attribute(attr_ind).size();
 
-    char char_attr_value[attr_size + 1];
-    memcpy(char_attr_value, (char *)record_data + offset, attr_size);
+    char * attr_value = (char *)record_data + offset;
     switch ((TypeCode)table.attribute(attr_ind).type_name()) {
       case INT: {
-          int value = *((int *)char_attr_value);
+          int value = *((int *)attr_value);
           record << value;
         }
         break;
       case DOUBLE: {
-          double value = *((double *)char_attr_value);
+          double value = *((double *)attr_value);
           record << std::fixed << value;
         }
         break;
       case VARCHAR: {
-          char_attr_value[attr_size] = '\0';
-          record << "\"";
-          for( int i = 0; i != attr_size; ++i) {
-            record << char_attr_value[i];           
-            if( char_attr_value[i] == '"') {
-              record << '"';
-            }
-          }
-          record << "\"";
+          record << '"';
+          record << attr_value;
+          record << '"';
         }
         break;
     }
