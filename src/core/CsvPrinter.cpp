@@ -66,14 +66,9 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
         }
         break;
       case VARCHAR: {
-          record << "\"";
-          for( int i = 0; i != attr_size; ++i) {
-            record << (char)attr_value[i];           
-            if( (char)attr_value[i] == '"') {
-              record << '"';
-            }
-          }
-          record << "\"";
+          record << '"';
+          record << attr_value;
+          record << '"';
         }
         break;
     }
