@@ -53,6 +53,8 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
   for (int attr_ind = 0, end = table.attribute_size(); attr_ind < end; ++attr_ind) {
     int attr_size = table.attribute(attr_ind).size();
 
+    //FIXME do not copy record to your stack! why would you do that?
+
     char char_attr_value[attr_size + 1];
     memcpy(char_attr_value, (char *)record_data + offset, attr_size);
     switch ((TypeCode)table.attribute(attr_ind).type_name()) {
@@ -67,6 +69,7 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
         }
         break;
       case VARCHAR: {
+          //FIXME zeroes are stored in db.just pass the pointer to stringstream's << operator and be happy.
           char_attr_value[attr_size] = '\0';
           record << "\"";
           for( int i = 0; i != attr_size; ++i) {
