@@ -54,7 +54,7 @@ void BTreeIndexManager::create_index(
   //insert records
   IndexOperationParams params;
   params.value_size = key_size;
-  params.value = new char[params.value_size];
+  params.value = new char[params.value_size]();
 #ifdef BTREE_DBG
   Utils::info("[BTree][Create index] Key size was determined to be " + std::to_string(params.value_size));
   Utils::info("[BTree][Create index] Insert values into index... ");
@@ -70,7 +70,6 @@ void BTreeIndexManager::create_index(
   }
 
   delete [] (char *)params.value;
-  delete t_metadata;
 }
 
 int BTreeIndexManager::look_up_value(IndexOperationParams * params) {
@@ -431,7 +430,6 @@ BTreeIndexManager::SortedIterator::SortedIterator(std::string const & table_name
 
 BTreeIndexManager::SortedIterator::~SortedIterator() {
   if (current_page_ != NULL) { current_page_->unpin(); }
-  delete t_metadata;
   if (record_data_ != NULL) { delete [] (char *)record_data_; }
   if (init_key_ != NULL) { delete [] init_key_; }
 }

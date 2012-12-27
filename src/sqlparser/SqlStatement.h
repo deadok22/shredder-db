@@ -70,7 +70,6 @@ class CreateTableStatement : public TableTargetedStatement {
     std::vector<TableColumn> columns_;
 };
 
-
 class CreateIndexStatement : public TableTargetedStatement {
   public:
     struct Column {
@@ -143,6 +142,28 @@ private:
   std::vector<WhereClause::Predicate> predicates_;
 };
 
+//TODO create a supertype with where clause.
+
+class DeleteStatement : public TableTargetedStatement {
+  public:
+    DeleteStatement(std::string const & table_name, WhereClause const & where = WhereClause())
+      : TableTargetedStatement(DELETE, table_name),
+        where_clause_(where) {}
+    
+    WhereClause const & get_where_clause() const {
+      return where_clause_;
+    }
+    
+    bool has_where_clause() const {
+      return !where_clause_.is_empty();
+    }
+    
+    virtual ~DeleteStatement() {}
+    
+  private:
+    WhereClause where_clause_;
+};
+
 //TODO remove inheritance from TableTargetedStatement when you add join support
 class SelectStatement : public TableTargetedStatement {
   public:
@@ -195,11 +216,6 @@ class InsertStatement : public TableTargetedStatement {
 };
 //TODO
 class UpdateStatement : public TableTargetedStatement {
-
-
-};
-//TODO
-class DeleteStatement : public TableTargetedStatement {
 
 
 };
