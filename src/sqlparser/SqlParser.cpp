@@ -20,6 +20,9 @@ static const boost::regex INSERT_START_REGEX(INSERT_START_REGEX_TEXT, boost::reg
 static const std::string DELETE_START_REGEX_TEXT("^\\s*DELETE\\s+FROM\\s+.*$");
 static const boost::regex DELETE_START_REGEX(DELETE_START_REGEX_TEXT, boost::regex_constants::icase);
 
+static const std::string UPDATE_START_REGEX_TEXT("^\\s*UPDATE\\s+.*$");
+static const boost::regex UPDATE_START_REGEX(UPDATE_START_REGEX_TEXT, boost::regex_constants::icase);
+
 /*
  * Utility constants
  */
@@ -39,42 +42,42 @@ static const std::string WHERE_CLAUSE_REGEX_TEXT
         + "(?:\\s+AND\\s+"
         + PREDICATE_REGEX_TEXT
         + "\\s*)*)";
+static const std::string ASSIGNMENT_REGEX_TEXT = "\\s*(?'COLUMN'\\w+)\\s*=\\s*(?:(?:\"(?'VALUE'(?:(?:\"\")|[^\"])*)\")|(?'VALUE'[^,\\s]+))";
 
 SqlStatement const * SqlParser::parse(std::string const & statement_text) const {
 #ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] entered sql statement parsing");
   Utils::info("[SqlParser] the statement is " + statement_text);
 #endif
-  SqlStatement const * parsedStatement = 0;
+  SqlStatement const * parsed_statement = 0;
   SqlStatementType type = get_sql_statement_type(statement_text);
   switch(type) {
     case SELECT : {
-      parsedStatement = parse_select_statement(statement_text);
+      parsed_statement = parse_select_statement(statement_text);
       break;
     }
     case CREATE_TABLE : {
-      parsedStatement = parse_create_table_statement(statement_text);
+      parsed_statement = parse_create_table_statement(statement_text);
       break;
     }
     case INSERT : {
-      parsedStatement = parse_insert_statement(statement_text);
+      parsed_statement = parse_insert_statement(statement_text);
       break;
     }
     case CREATE_INDEX : {
-      parsedStatement = parse_create_index_statement(statement_text);
+      parsed_statement = parse_create_index_statement(statement_text);
       break;
     }
     case UPDATE : {
-      //TODO implement
-      Utils::error("[SqlParser] UPDATE parser is not implemented yet");
+      parsed_statement = parse_update_statement(statement_text);
       break;
     }
     case DELETE : {
-      parsedStatement = parse_delete_statement(statement_text);
+      parsed_statement = parse_delete_statement(statement_text);
       break;
     }
     case UNKNOWN : {
-      parsedStatement = new UnknownStatement();
+      parsed_statement = new UnknownStatement();
       break;
     }
     default : {
@@ -85,7 +88,7 @@ SqlStatement const * SqlParser::parse(std::string const & statement_text) const 
 #ifdef SQLPARSE_DBG
   Utils::info("[SqlParser] leaving sql statement parsing");
 #endif
-  return parsedStatement;
+  return parsed_statement;
 }
 
 SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement_text) const {
@@ -120,6 +123,12 @@ SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement
 #ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is DELETE");
     return DELETE;
+#endif
+  }
+  if (boost::regex_match(statement_text, UPDATE_START_REGEX)) {
+#ifdef SQLPARSE_DBG
+    Utils::info("[SqlParser] the statement is UPDATE");
+    return UPDATE;
 #endif
   }
   //TODO add more statement types
@@ -268,6 +277,76 @@ SqlStatement const * SqlParser::parse_delete_statement(std::string const & state
   }
   
   return new DeleteStatement(table_name, where_clause);
+}
+
+SqlStatement const * SqlParser::parse_update_statement(std::string const & statement_text) const {
+  static std::string UPDATE_REGEX_TEXT
+        = "^\\s*UPDATE\\s+(?'TABLE'\\w+)\\s+SET\\s+(?'SET'(?:"
+          + ASSIGNMENT_REGEX_TEXT + ")"
+          + "(?:\\s*," + ASSIGNMENT_REGEX_TEXT + ")*)"
+          + "(?:\\s+" + WHERE_CLAUSE_REGEX_TEXT + ")?"
+          + "\\s*$";
+  static boost::regex UPDATE_REGEX(UPDATE_REGEX_TEXT, boost::regex_constants::icase);
+  
+#ifdef SQLPARSE_DBG
+  Utils::info("[SqlParser] parsing UPDATE statement");
+#endif
+  
+  boost::smatch match_results;
+  if (!boost::regex_match(statement_text, match_results, UPDATE_REGEX)) {
+    Utils::info("[SqlParser] invalid UPDATE statement syntax");
+    return new UnknownStatement();
+  }
+  
+  std::string table_name = match_results["TABLE"].str();
+  
+  std::pair<std::vector<std::string>, std::vector<std::string>> column_value_pairs
+    = parse_assignments(match_results["SET"].str());
+  if (0 == column_value_pairs.first.size() || column_value_pairs.first.size() != column_value_pairs.second.size()) {
+    Utils::warning("[SqlParser] invalid UPDATE ... SET ... syntax");
+    return new UnknownStatement();
+  }
+  
+  WhereClause where;
+  if ("" != match_results["WHERE"]) {
+    where = parse_where_clause(match_results["WHERE"].str());
+    if (where.is_empty()) {
+      Utils::warning("[SqlParser] invalid UPDATE statement syntax: bad WHERE clause");
+      return new UnknownStatement();
+    }
+  }
+  
+  return new UpdateStatement(table_name, column_value_pairs.first, column_value_pairs.second, where);
+}
+
+/**
+ * Returns an empty vector if any syntax error are found
+ */
+std::pair<std::vector<std::string>, std::vector<std::string>> SqlParser::parse_assignments(std::string const & assignments_string) const {
+  static const std::string ONE_ASSIGNMENT_REGEX_TEXT
+        = "^" + ASSIGNMENT_REGEX_TEXT + "\\s*(?:,|$)";
+  static const boost::regex ONE_ASSIGNMENT_REGEX(ONE_ASSIGNMENT_REGEX_TEXT, boost::regex_constants::icase);
+  
+  Utils::info("[SqlParser] [parseA] parsing SET ... assignments");
+  
+  std::string::const_iterator start = assignments_string.begin();
+  std::string::const_iterator end = assignments_string.end();
+  
+  std::pair<std::vector<std::string>, std::vector<std::string>> column_value_pairs;
+  boost::smatch match_results;
+  while(boost::regex_search(start, end, match_results, ONE_ASSIGNMENT_REGEX)) {
+    column_value_pairs.first.push_back(match_results["COLUMN"].str());
+    column_value_pairs.second.push_back(match_results["VALUE"].str());
+    
+    Utils::info("[SqlParser] [parseA] parsed column: " + column_value_pairs.first.back() + " and value: " + column_value_pairs.second.back());
+    start = match_results[0].second;
+  }
+  
+  if (0 == column_value_pairs.first.size()) {
+    Utils::info("[SqlParser] [parseA] no assignments parsed");
+  }
+  
+  return column_value_pairs;
 }
 
 std::vector<std::string> SqlParser::parse_comma_separated_values(std::string const & values_string) const {
