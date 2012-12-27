@@ -86,9 +86,7 @@ int BTreeIndexManager::look_up_value(IndexOperationParams * params) {
   unsigned ret_value = -1;
   if (ins_index != 0) {
     char * record = data + ins_index * entry_size + DATA_PAGE_HEADER_SIZE; 
-//CMP_HERE!!!
-    //TODO fix with comparator
-    if (*((int *)(record + RECORD_ID_SIZE)) == *((int *)params->value)) {
+    if (0 == record_comparer_.compare(record + RECORD_ID_SIZE, params->value)) {
       params->page_id = *((unsigned *)record);
       params->slot_id = *((unsigned *)record + 1);
 #ifdef BTREE_DBG
@@ -363,8 +361,7 @@ unsigned BTreeIndexManager::find_offset_for_storage(char * data, unsigned aux_re
   while (record_index < records_count) {
     char *key_data = data + aux_record_data_size;
     //NB can be enhanced with binary search
-//CMP_HERE!!!    //TODO repalace
-    if (*((int *)key_data) >= *((int *)params.value)) { break; }
+    if (record_comparer_.compare(key_data, params.value) >= 0) { break; }
     data += aux_record_data_size + params.value_size;
     ++record_index;
   }
