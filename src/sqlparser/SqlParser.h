@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include "SqlStatement.h"
 #include "../common/Utils.h"
 
@@ -18,6 +19,8 @@ class SqlParser {
     SqlStatement const * parse_insert_statement(std::string const & statement_text) const;
     SqlStatement const * parse_select_statement(std::string const & statement_text) const;
     SqlStatement const * parse_delete_statement(std::string const & statement_text) const;
+    SqlStatement const * parse_update_statement(std::string const & statement_text) const;
+    std::pair<std::vector<std::string>, std::vector<std::string>> parse_assignments(std::string const & assignments_string) const;
     std::vector<std::string> parse_comma_separated_values(std::string const & values_string) const;
     std::vector<TableColumn> parse_table_columns(std::string const & columns_string) const;
     std::vector<CreateIndexStatement::Column> parse_create_index_columns(std::string const & columns_string) const;
@@ -44,5 +47,8 @@ int main() {
   
   delete parser.parse("DELETE FROM table_name   ");
   delete parser.parse("DELETE FROM table_name WHERE a < 10");
+  
+  delete parser.parse("UpdaTe table_name SeT a = 10, b =  150");
+  delete parser.parse("UPDATE table_name SET b = \"NaNNaNNaNNaN BATMAN!!!\" WhERE a > 15");
 }
 #endif

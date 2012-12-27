@@ -210,17 +210,33 @@ class InsertStatement : public TableTargetedStatement {
     
     virtual ~InsertStatement() {}
     
+  protected:
+    InsertStatement(SqlStatementType type, std::string const & table_name, std::vector<std::string> const & column_names, std::vector<std::string> const & values)
+      : TableTargetedStatement(type, table_name), column_names_(column_names), values_(values) {}
   private:
     std::vector<std::string> column_names_;
     std::vector<std::string> values_;
 };
-//TODO
-class UpdateStatement : public TableTargetedStatement {
 
-
+class UpdateStatement : public InsertStatement {
+  public:
+    UpdateStatement(std::string const & table_name, std::vector<std::string> const & column_names, std::vector<std::string> const & values, WhereClause const & where = WhereClause())
+      : InsertStatement(UPDATE, table_name, column_names, values), where_clause_(where) {}
+    
+    WhereClause const & get_where_clause() const {
+      return where_clause_;
+    }
+    
+    bool has_where_clause() const {
+      return !where_clause_.is_empty();
+    }
+    
+    virtual ~UpdateStatement() {}
+  private:
+    WhereClause where_clause_;
 };
+
 //TODO
 class DropStatement : public TableTargetedStatement {
-
-
+  
 };
