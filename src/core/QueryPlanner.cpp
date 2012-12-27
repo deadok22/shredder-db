@@ -38,8 +38,8 @@ QueryPlanner::TraversalType QueryPlanner::predicat_to_traversal(WhereClause::Pre
   switch (predicat.type) {
     case WhereClause::EQ: return LOOK_UP;
     case WhereClause::NEQ: case WhereClause::UNKNOWN: return FULL_SCAN;
-    case WhereClause::GTOE: case WhereClause::GT: return RANGE_BW;
-    case WhereClause::LTOE: case WhereClause::LT: return RANGE_FW;
+    case WhereClause::GTOE: case WhereClause::GT: return RANGE_FW;
+    case WhereClause::LTOE: case WhereClause::LT: return RANGE_BW;
   }
 
   return FULL_SCAN;

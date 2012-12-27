@@ -42,7 +42,7 @@ void BTreeIndexManager::create_index(
   char * page_data = meta_page.get_data(false);
   *((unsigned *)page_data) = 1; //root ptr
   *((unsigned *)page_data + 1) = key_size; //key size
-  *((unsigned *)page_data + 2) = 1; //page sused, 1 is for root
+  *((unsigned *)page_data + 2) = 1; //pages used, 1 is for root
   meta_page.unpin();
 
   Page &root_page = bm.get_page(1, index_file_name);
@@ -161,7 +161,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
   }
 
   Page &node_page = BufferManager::get_instance().get_page(node_id, index_file_name_);
-  char *data = node_page.get_data();
+  char *data = node_page.get_data(false);
   unsigned number_of_items = get_records_count(data);
 
   if (*((unsigned *)data) == LEAF_TYPE) {
@@ -172,6 +172,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
     unsigned entries_per_page = (Page::PAGE_SIZE - DATA_PAGE_HEADER_SIZE) / entry_size; 
 
     unsigned ins_index = find_offset_for_storage(data, RECORD_ID_SIZE, params);
+
     if (number_of_items < entries_per_page) {
 #ifdef BTREE_DBG
     Utils::info("[BTree][Insert][Top Down] Perform 'NON-FULL' Insert");
@@ -183,7 +184,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
       char * key_to_push = split_node(ctx, params);
 #ifdef BTREE_DBG
       unsigned new_node_id = *((unsigned *)(key_to_push + get_key_size() + NODE_PTR_SIZE));
-      Utils::info("[BTree][Insert][Top Down] Perform 'NODE_SPLIT'. Created node id is " + std::to_string(new_node_id) + ". Push child with left-ref to " + std::to_string(node_id));
+      Utils::info("[BTree][Insert][Top Down] Perform 'LEAF_SPLIT'. Created node id is " + std::to_string(new_node_id) + ". Push child with left-ref to " + std::to_string(node_id));
 #endif
 
       *((unsigned *)key_to_push) = node_id;
@@ -195,6 +196,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
     Utils::info("[BTree][Insert][Top Down] Process NODE node with id " + std::to_string(node_id));
 #endif
     unsigned record_index = find_offset_for_storage(data, NODE_PTR_SIZE, params);
+
     data += DATA_PAGE_HEADER_SIZE + record_index * (params.value_size + NODE_PTR_SIZE);
     node_page.unpin(); //don't pin too much
 #ifdef BTREE_DBG
@@ -211,7 +213,7 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
 
     //reload page
     Page &node_page = BufferManager::get_instance().get_page(node_id, index_file_name_);
-    char *data = node_page.get_data();
+    char *data = node_page.get_data(false);
     unsigned number_of_items = get_records_count(data);
       
     size_t entry_size = params.value_size + NODE_PTR_SIZE;
@@ -234,13 +236,13 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
       char * key_to_push = split_node(ctx, params);
       delete [] (char *) child_entry;
       child_entry = NULL;
-#ifdef BTREE_DBG
-      unsigned new_node_id = *((unsigned *)(key_to_push + get_key_size() + NODE_PTR_SIZE));
-      Utils::info("[BTree][Insert][Bottom Up] Perform 'NODE_SPLIT'. Created node id is " + std::to_string(new_node_id) + ". Push child with left-ref to " + std::to_string(node_id));
-#endif
 
       *((unsigned *)key_to_push) = node_id;
       child_entry = key_to_push;
+#ifdef BTREE_DBG
+      unsigned new_node_id = *((unsigned *)(key_to_push + get_key_size() + NODE_PTR_SIZE));
+      Utils::info("[BTree][Insert][Bottom Up] Performed 'NODE_SPLIT'. Push child with left-ref to " + std::to_string(node_id) + " and right-ref to " + std::to_string(new_node_id));
+#endif
       if (node_id == get_root_node()) {
         change_root((char *)child_entry);
         delete [] (char *) child_entry;
@@ -248,10 +250,9 @@ void BTreeIndexManager::tree_insert(unsigned node_id, IndexOperationParams const
 #ifdef BTREE_DBG
         Utils::info("[BTree][Insert][Bottom Up] Create a new root. New root id is " + std::to_string(get_root_node()));
 #endif
-
       }
-      node_page.unpin();
     }
+    node_page.unpin();
 #ifdef BTREE_DBG
     Utils::info("[BTree][Insert][Bottom Up] Finish insert exec for node " + std::to_string(node_id));
 #endif
@@ -270,8 +271,8 @@ char * BTreeIndexManager::split_node(SplitNodeOpContext &ctx, IndexOperationPara
 
   char *new_data = new_node.get_data(false);
   *((unsigned *) new_data) = node_is_leaf ? LEAF_TYPE : NODE_TYPE;
-  *((unsigned *) new_data + 1) = items_to_move;
-  *((unsigned *) ctx.current_node_data + 1) -= items_to_move;
+  set_records_count(new_data, items_to_move);
+  set_records_count(ctx.current_node_data, get_records_count(ctx.current_node_data) - items_to_move);
 
   if (node_is_leaf) { //add into leaves' linked list
     *((unsigned *) new_data + 2) = *((unsigned *) ctx.current_node_data + 2);
@@ -285,7 +286,7 @@ char * BTreeIndexManager::split_node(SplitNodeOpContext &ctx, IndexOperationPara
 
   char * start_copy_ptr = ctx.current_node_data + DATA_PAGE_HEADER_SIZE + items_in_left_node * ctx.entry_size;
   memcpy(new_data + DATA_PAGE_HEADER_SIZE, start_copy_ptr, items_to_move * ctx.entry_size + (node_is_leaf ? 0 : NODE_PTR_SIZE));
-
+  
   char * insertion_data = ctx.current_node_data;
   if (items_in_left_node <= ctx.ins_index) { //entry should go to 'right' node
     insertion_data = new_data;
@@ -298,26 +299,25 @@ char * BTreeIndexManager::split_node(SplitNodeOpContext &ctx, IndexOperationPara
     insert_into_node(insertion_data, ctx.ins_index, ctx.child_entry);
   }
 
-  new_node.unpin();
-
   char *key_to_push = new char[params.value_size + 2 * NODE_PTR_SIZE];
   unsigned aux_data_size = node_is_leaf ? RECORD_ID_SIZE : NODE_PTR_SIZE;
   memcpy(key_to_push + NODE_PTR_SIZE, new_data + DATA_PAGE_HEADER_SIZE + aux_data_size, params.value_size);
   *((unsigned *)(key_to_push + NODE_PTR_SIZE + params.value_size)) = new_node_id;
+
+  new_node.unpin();
+
   return key_to_push;
 }
 
 void BTreeIndexManager::change_root(char *entry) {
   unsigned new_root_id = get_new_page_id();
+
   Page &new_root_node = BufferManager::get_instance().get_page(new_root_id, index_file_name_);
   char * root_data = new_root_node.get_data(false);
   *((unsigned *)root_data) = NODE_TYPE;
-  *((unsigned *)root_data + 1) = 1; //set node items number
-
-  unsigned key_size = get_key_size();
-  *((unsigned *)(root_data + DATA_PAGE_HEADER_SIZE)) = *((unsigned *)entry);
-  memcpy(root_data + DATA_PAGE_HEADER_SIZE + NODE_PTR_SIZE, entry + NODE_PTR_SIZE, get_key_size());
-  *((unsigned *)(root_data + DATA_PAGE_HEADER_SIZE + NODE_PTR_SIZE + key_size)) = *((unsigned *)(entry + NODE_PTR_SIZE + key_size));
+  set_records_count(root_data, 1);
+  
+  memcpy(root_data + DATA_PAGE_HEADER_SIZE , entry, 2 * NODE_PTR_SIZE + get_key_size());
   new_root_node.unpin();
 
   //update root node
@@ -380,7 +380,7 @@ bool BTreeIndexManager::delete_value(IndexOperationParams * params) {
 unsigned BTreeIndexManager::get_new_page_id() {
   BufferManager &bm = BufferManager::get_instance();
   Page &meta_page = bm.get_page(0, index_file_name_);
-  unsigned pages_used = ++(*((unsigned *)meta_page.get_data(true) + 2));
+  unsigned pages_used = ++(*((unsigned *)meta_page.get_data(false) + 2));
   meta_page.unpin();
   return pages_used;  
 }
@@ -448,6 +448,7 @@ bool BTreeIndexManager::SortedIterator::switch_page() {
     }
   } else {
     page_id = *((unsigned *)current_page_->get_data() + 2);
+    current_page_->unpin();
   }
 
 #ifdef BTREE_SI_DBG
