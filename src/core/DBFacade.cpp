@@ -145,9 +145,9 @@ void DBFacade::execute_statement(SelectStatement const * stmt) {
   RecordsIterator *rec_itr = QueryPlanner::get_instance().execute_select(*metadata, conds);
 
   unsigned returned_records = 0;
-  std::cout << CsvPrinter::get_instance().get_header_csv(*metadata);
+  std::cout << CsvPrinter::get_instance().get_header_csv(*metadata, stmt->get_column_names());
   while (rec_itr->next()) {
-    std::cout << CsvPrinter::get_instance().get_csv(**rec_itr, *metadata);
+    std::cout << CsvPrinter::get_instance().get_csv(**rec_itr, *metadata, stmt->get_column_names());
     ++returned_records;
   }
   std::cout << "Total " << returned_records << " record(s)." << std::endl;
