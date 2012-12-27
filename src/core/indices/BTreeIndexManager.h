@@ -41,7 +41,7 @@ public:
     char * init_key_;
   };
 public:
-  BTreeIndexManager() {}
+//  BTreeIndexManager() {}
   BTreeIndexManager(std::string const & table_name, std::string const & index_name);
   static void create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata);
 

@@ -72,6 +72,14 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
     key->set_asc(!column.is_descending);
   }
 
+#ifdef DBFACADE_DBG
+  Utils::info("[DBFacade] Saving index metadata");
+#endif
+  if (!MetaDataProvider::add_index_info(stmt->get_table_name(), index_metadata)) {
+    std::cout << "Unable to save index description" << std::endl;
+    return;
+  }
+
   //TODO fix magic number
   if (index_metadata.type() == 0) {
 #ifdef DBFACADE_DBG
@@ -80,13 +88,6 @@ void DBFacade::execute_statement(CreateIndexStatement const * stmt) {
     ExtIndexManager::create_index(stmt->get_table_name(), index_metadata);
   } else {
     BTreeIndexManager::create_index(stmt->get_table_name(), index_metadata);
-  }
-
-#ifdef DBFACADE_DBG
-  Utils::info("[DBFacade] Saving index metadata");
-#endif
-  if (!MetaDataProvider::add_index_info(stmt->get_table_name(), index_metadata)) {
-    std::cout << "Unable to save index description" << std::endl;
   }
 
   std::cout << "Index creation finished." << std::endl;

@@ -82,7 +82,7 @@ int * ExtIndexManager::BucketPointersIterator::operator->() {
 // ExtIndetManager implementation
 
 ExtIndexManager::ExtIndexManager(std::string const & table_name, std::string const & index_name):
- index_path_(Utils::get_table_dir(table_name) + "/ext_hash_" + index_name) {}
+  IndexManager(table_name, index_name), index_path_(Utils::get_table_dir(table_name) + "/ext_hash_" + index_name) {}
 
 void ExtIndexManager::create_index(std::string const & table_name, TableMetaData_IndexMetadata const & ind_metadata) {
   std::string path = Utils::get_table_dir(table_name);
@@ -145,8 +145,8 @@ int ExtIndexManager::look_up_value(IndexOperationParams * params) {
   unsigned bucket_record_index = 0;
   while (bucket_record_index < occupied) {
     char *key_data = data + RECORD_ID_SIZE;
-    //TODO replace with comparator
-    if (memcmp(key_data, params->value, params->value_size) == 0) {
+
+    if (record_comparer_.compare(key_data, params->value) == 0) {
       //BINGO
       params->page_id = *((int *)data);
       params->slot_id = *((int *)data + 1);

@@ -17,7 +17,7 @@ unsigned const BTreeIndexManager::LEAF_TYPE = 0xEFBE;
 unsigned const BTreeIndexManager::NODE_TYPE = 0xDEDE;
 
 BTreeIndexManager::BTreeIndexManager(std::string const & table_name, std::string const & index_name):
-  index_file_name_(Utils::get_table_dir(table_name) + "/btree_" + index_name) {}
+  IndexManager(table_name, index_name), index_file_name_(Utils::get_table_dir(table_name) + "/btree_" + index_name) {}
 
 void BTreeIndexManager::create_index(
   std::string const & table_name,
