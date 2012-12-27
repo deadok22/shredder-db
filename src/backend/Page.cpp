@@ -27,3 +27,4 @@ void Page::set_dirty() { dirty_ = true; }
 void Page::reset_dirty() { dirty_ = false; }
 
 time_t Page::get_tstamp() { return tstamp_; }
+void Page::update_tstamp() { tstamp_ = time (NULL);}

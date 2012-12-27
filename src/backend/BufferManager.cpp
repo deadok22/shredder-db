@@ -111,6 +111,7 @@ Page* BufferManager::find_page(size_t page_id,string const& fname) {
 #ifdef IO_BUFF_M
     Utils::log("[BufferManager] found page in buffer");
 #endif
+    (buffer_[idx])->update_tstamp();
     return buffer_[idx];
   }
 #ifdef IO_BUFF_M 

@@ -25,6 +25,7 @@ public:
   bool is_unpinned();
 
   time_t get_tstamp();
+  void update_tstamp();
   ~Page();
 private:
    
