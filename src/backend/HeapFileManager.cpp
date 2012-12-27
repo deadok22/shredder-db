@@ -68,7 +68,7 @@ bool HeapFileManager::process_insert_record(
   }
 
   if (result_ctx != NULL) {
-    memcmp(result_ctx->record_data, new_record_ptr, table.record_size());
+    memcpy(result_ctx->record_data, new_record_ptr, table.record_size());
     result_ctx->record_page_id = page.get_pid();
     result_ctx->record_slot_id = slot_number;
   }
