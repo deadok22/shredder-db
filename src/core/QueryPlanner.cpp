@@ -144,8 +144,7 @@ void QueryPlanner::init_sample_record(TableMetaData const &table, WhereClause::P
         *((double *)(sample_record + offset)) = std::stod(predicat.value);
       } else if (i->type_name() == VARCHAR) {
         memset(sample_record + offset, '\0', i->size()); //must mem set since value is used in hash counting
-        memcpy(sample_record + offset, predicat.value.c_str(), i->size());
-        *(sample_record + offset + i->size()) = '\0';
+        memcpy(sample_record + offset, predicat.value.c_str(), predicat.value.size());
       }
       break;
     } else { 
