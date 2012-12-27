@@ -1,5 +1,8 @@
 #pragma once
 
+#include "../MetaDataProvider.h"
+#include "../RecordComparer.h"
+
 #include "IndexOperationParams.h"
 #include "TableMetadata.pb.h"
 
@@ -11,6 +14,9 @@ public:
   virtual bool insert_value(IndexOperationParams const & params) = 0;
   virtual bool delete_value(IndexOperationParams * params) = 0;
   virtual ~IndexManager() {}
+
+  IndexManager(std::string const & table_name, std::string const & index_name) :
+    record_comparer_(*(MetaDataProvider::get_instance()->get_meta_data(table_name)), index_name) {}
 
   static size_t compute_key_size(TableMetaData const & t_meta, TableMetaData_IndexMetadata const & i_meta) {
     size_t key_size = 0;
@@ -38,4 +44,6 @@ public:
       }
     }
   }
+protected:
+  RecordComparer record_comparer_;
 };
