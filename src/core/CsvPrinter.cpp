@@ -76,6 +76,8 @@ string CsvPrinter::get_csv(void const * record_data, TableMetaData const & table
             record << char_attr_value[i];           
             if( char_attr_value[i] == '"') {
               record << '"';
+            } else if( char_attr_value[i] == '\0') {
+              break;
             }
           }
           record << "\"";
