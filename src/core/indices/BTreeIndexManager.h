@@ -11,7 +11,7 @@
 //File format
 // 0th page -- meta data: root_ptr; key_size; pages_used
 
-// node: 1st int -- stored entries type, 2nd -- number of items, 3rd - ptr to next data leaf
+// page: 1st int -- stored entries type, 2nd -- number of items, 3rd - ptr to next data leaf
 // for nodes ptr value ptr ... ptr value ... ptr
 // for leafs: page_id:slot_id values...
 
