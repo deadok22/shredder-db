@@ -122,14 +122,14 @@ SqlStatementType SqlParser::get_sql_statement_type(std::string const & statement
   if (boost::regex_match(statement_text, DELETE_START_REGEX)) {
 #ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is DELETE");
-    return DELETE;
 #endif
+    return DELETE;
   }
   if (boost::regex_match(statement_text, UPDATE_START_REGEX)) {
 #ifdef SQLPARSE_DBG
     Utils::info("[SqlParser] the statement is UPDATE");
-    return UPDATE;
 #endif
+    return UPDATE;
   }
   //TODO add more statement types
   Utils::warning("[SqlParser] the statement is not recognized");
